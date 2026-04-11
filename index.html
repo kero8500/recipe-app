@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>レシピAI</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="レシピAI">
+<meta name="theme-color" content="#e8590c">
+<link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23ff8c42'/><stop offset='1' stop-color='%23e8590c'/></linearGradient></defs><rect width='180' height='180' rx='40' fill='url(%23g)'/><text x='90' y='125' font-size='100' text-anchor='middle'>🍳</text></svg>">
+<link rel="manifest" href='data:application/manifest+json;charset=utf-8,{"name":"レシピ提案AI","short_name":"レシピAI","start_url":"./","display":"standalone","background_color":"%23fff7f0","theme_color":"%23e8590c","icons":[{"src":"data:image/svg+xml;utf8,<svg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 512 512%27><rect width=%27512%27 height=%27512%27 rx=%27110%27 fill=%27%23e8590c%27/><text x=%27256%27 y=%27370%27 font-size=%27300%27 text-anchor=%27middle%27>🍳</text></svg>","sizes":"512x512","type":"image/svg+xml"}]}'>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+    background: linear-gradient(180deg, #fff7f0 0%, #ffe8d6 100%);
+    min-height: 100vh;
+    color: #333;
+    line-height: 1.6;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    -webkit-touch-callout: none;
+    overscroll-behavior-y: contain;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 16px; }
+  header {
+    text-align: center;
+    padding: 20px 0 12px;
+  }
+  header h1 {
+    margin: 0;
+    font-size: 24px;
+    color: #e8590c;
+  }
+  header p {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: #6b4423;
+  }
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 18px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 16px rgba(232, 89, 12, 0.08);
+  }
+  .field { margin-bottom: 14px; }
+  .field:last-child { margin-bottom: 0; }
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #8b4513;
+  }
+  input[type="text"], textarea, select {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 16px;
+    border: 1.5px solid #ffd4b0;
+    border-radius: 10px;
+    background: #fffaf5;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  input[type="text"]:focus, textarea:focus, select:focus {
+    border-color: #e8590c;
+  }
+  textarea { resize: vertical; min-height: 60px; }
+  .row { display: flex; gap: 10px; }
+  .row .field { flex: 1; }
+  button {
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, #ff8c42, #e8590c);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(232, 89, 12, 0.3);
+    transition: transform 0.1s, box-shadow 0.2s;
+  }
+  button:active { transform: translateY(1px); box-shadow: 0 2px 6px rgba(232, 89, 12, 0.3); }
+  button:disabled { opacity: 0.6; cursor: not-allowed; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    padding: 6px 12px;
+    border: 1.5px solid #ffd4b0;
+    border-radius: 20px;
+    background: #fffaf5;
+    font-size: 13px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .chip.active {
+    background: #e8590c;
+    color: #fff;
+    border-color: #e8590c;
+  }
+  .loading { text-align: center; padding: 30px 10px; color: #8b4513; }
+  .spinner {
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    border: 3px solid #ffd4b0;
+    border-top-color: #e8590c;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .recipe h2 {
+    margin: 0 0 8px;
+    color: #e8590c;
+    font-size: 22px;
+  }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .meta span {
+    background: #fff3e6;
+    color: #8b4513;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .section-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #8b4513;
+    border-left: 4px solid #e8590c;
+    padding-left: 10px;
+    margin: 18px 0 10px;
+  }
+  ul.ing { list-style: none; padding: 0; margin: 0; }
+  ul.ing li {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px dashed #ffd4b0;
+    font-size: 14px;
+  }
+  ul.ing li:last-child { border-bottom: none; }
+  ol.steps { padding-left: 20px; margin: 0; }
+  ol.steps li { margin-bottom: 10px; font-size: 14px; }
+  .nutri {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    text-align: center;
+  }
+  .nutri div {
+    background: #fff3e6;
+    padding: 8px 4px;
+    border-radius: 8px;
+  }
+  .nutri .label { font-size: 10px; color: #8b4513; }
+  .nutri .val { font-size: 13px; font-weight: 700; color: #e8590c; }
+  .tip {
+    background: #fff8ee;
+    border-left: 4px solid #ffaa4a;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-top: 6px;
+  }
+  .error {
+    background: #ffe0e0;
+    color: #c33;
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 13px;
+  }
+  .apikey-note {
+    font-size: 11px;
+    color: #8b4513;
+    margin-top: 6px;
+    line-height: 1.4;
+  }
+  @media (max-width: 380px) {
+    .nutri { grid-template-columns: repeat(3, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🍳 レシピ提案AI</h1>
+    <p>あなたにぴったりのレシピをAIが考えます</p>
+  </header>
+
+  <div class="card">
+    <div class="field">
+      <label>🔑 Gemini APIキー</label>
+      <input type="text" id="apiKey" placeholder="AIzaSy..." autocomplete="off">
+      <div class="apikey-note">※<a href="https://aistudio.google.com/apikey" target="_blank" style="color:#e8590c;">Google AI Studio</a>で無料取得。ブラウザのlocalStorageに保存されます。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="field">
+      <label>🍽 食べたいもの・料理のイメージ</label>
+      <input type="text" id="craving" placeholder="例：さっぱりした和食">
+    </div>
+    <div class="field">
+      <label>🥬 冷蔵庫にある食材</label>
+      <textarea id="ingredients" placeholder="例：鶏肉、玉ねぎ、卵"></textarea>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>👥 人数</label>
+        <input type="text" id="servings" placeholder="2人">
+      </div>
+      <div class="field">
+        <label>⏱ 調理時間</label>
+        <input type="text" id="time" placeholder="30分以内">
+      </div>
+    </div>
+    <div class="field">
+      <label>⚠️ 食の制限・アレルギー</label>
+      <input type="text" id="allergy" placeholder="例：乳製品NG">
+    </div>
+    <div class="field">
+      <label>📊 難易度</label>
+      <div class="chips" id="difficulty">
+        <div class="chip" data-val="簡単">簡単</div>
+        <div class="chip" data-val="普通">普通</div>
+        <div class="chip" data-val="本格的">本格的</div>
+      </div>
+    </div>
+    <div class="field">
+      <label>✨ 気分・シーン</label>
+      <div class="chips" id="mood">
+        <div class="chip" data-val="節約">節約</div>
+        <div class="chip" data-val="ダイエット">ダイエット</div>
+        <div class="chip" data-val="がっつり">がっつり</div>
+        <div class="chip" data-val="おもてなし">おもてなし</div>
+        <div class="chip" data-val="ヘルシー">ヘルシー</div>
+      </div>
+    </div>
+    <button id="generate">レシピを提案してもらう</button>
+  </div>
+
+  <div id="result"></div>
+</div>
+
+<script>
+// APIキーの復元と保存
+const apiKeyInput = document.getElementById('apiKey');
+apiKeyInput.value = localStorage.getItem('gemini_api_key') || '';
+apiKeyInput.addEventListener('change', () => {
+  localStorage.setItem('gemini_api_key', apiKeyInput.value.trim());
+});
+
+// チップ選択（単一選択）
+function setupChips(groupId) {
+  const group = document.getElementById(groupId);
+  group.addEventListener('click', (e) => {
+    if (!e.target.classList.contains('chip')) return;
+    const wasActive = e.target.classList.contains('active');
+    group.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    if (!wasActive) e.target.classList.add('active');
+  });
+}
+setupChips('difficulty');
+setupChips('mood');
+
+function getChipValue(groupId) {
+  const active = document.querySelector(`#${groupId} .chip.active`);
+  return active ? active.dataset.val : '';
+}
+
+function buildPrompt() {
+  const data = {
+    食べたいもの: document.getElementById('craving').value.trim(),
+    冷蔵庫の食材: document.getElementById('ingredients').value.trim(),
+    人数: document.getElementById('servings').value.trim(),
+    調理時間: document.getElementById('time').value.trim(),
+    アレルギー制限: document.getElementById('allergy').value.trim(),
+    難易度: getChipValue('difficulty'),
+    気分シーン: getChipValue('mood'),
+  };
+  const filled = Object.entries(data)
+    .filter(([, v]) => v)
+    .map(([k, v]) => `- ${k}: ${v}`)
+    .join('\n');
+
+  return `あなたは料理研究家です。以下の条件からレシピを1つ提案してください。
+${filled || '- 特に指定なし。おすすめの家庭料理を提案してください。'}
+
+必ず以下のJSON形式のみで回答してください（前後に説明文を付けない）:
+{
+  "name": "料理名",
+  "time": "調理時間（例: 30分）",
+  "difficulty": "難易度",
+  "cost": "目安費用（円）",
+  "ingredients": [{"name": "食材名", "amount": "分量"}],
+  "steps": ["手順1", "手順2"],
+  "nutrition": {"calories": "kcal", "protein": "g", "carbs": "g", "fat": "g", "salt": "g"},
+  "tips": "料理のポイント・アレンジ"
+}`;
+}
+
+async function generateRecipe() {
+  const apiKey = apiKeyInput.value.trim();
+  const resultEl = document.getElementById('result');
+  const btn = document.getElementById('generate');
+
+  if (!apiKey) {
+    resultEl.innerHTML = '<div class="card"><div class="error">APIキーを入力してください。</div></div>';
+    return;
+  }
+
+  btn.disabled = true;
+  resultEl.innerHTML = '<div class="card"><div class="loading"><div class="spinner"></div><div>レシピを考えています...</div></div></div>';
+
+  try {
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: buildPrompt() }] }],
+        generationConfig: {
+          temperature: 0.8,
+          maxOutputTokens: 1000,
+          responseMimeType: 'application/json',
+        },
+      }),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`API エラー (${res.status}): ${errText}`);
+    }
+
+    const json = await res.json();
+    const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) throw new Error('レスポンスが空でした');
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('JSON形式のレスポンスを取得できませんでした');
+    const recipe = JSON.parse(jsonMatch[0]);
+    renderRecipe(recipe);
+  } catch (e) {
+    resultEl.innerHTML = `<div class="card"><div class="error">エラー: ${escapeHtml(e.message)}</div></div>`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function renderRecipe(r) {
+  const ingredients = (r.ingredients || []).map(i =>
+    `<li><span>${escapeHtml(i.name)}</span><span>${escapeHtml(i.amount)}</span></li>`
+  ).join('');
+  const steps = (r.steps || []).map(s => `<li>${escapeHtml(s)}</li>`).join('');
+  const n = r.nutrition || {};
+
+  document.getElementById('result').innerHTML = `
+    <div class="card recipe">
+      <h2>${escapeHtml(r.name || '')}</h2>
+      <div class="meta">
+        <span>⏱ ${escapeHtml(r.time || '-')}</span>
+        <span>📊 ${escapeHtml(r.difficulty || '-')}</span>
+        <span>💰 ${escapeHtml(r.cost || '-')}</span>
+      </div>
+      <div class="section-title">食材</div>
+      <ul class="ing">${ingredients}</ul>
+      <div class="section-title">作り方</div>
+      <ol class="steps">${steps}</ol>
+      <div class="section-title">栄養素</div>
+      <div class="nutri">
+        <div><div class="label">カロリー</div><div class="val">${escapeHtml(n.calories || '-')}</div></div>
+        <div><div class="label">たんぱく質</div><div class="val">${escapeHtml(n.protein || '-')}</div></div>
+        <div><div class="label">炭水化物</div><div class="val">${escapeHtml(n.carbs || '-')}</div></div>
+        <div><div class="label">脂質</div><div class="val">${escapeHtml(n.fat || '-')}</div></div>
+        <div><div class="label">塩分</div><div class="val">${escapeHtml(n.salt || '-')}</div></div>
+      </div>
+      <div class="section-title">ポイント・アレンジ</div>
+      <div class="tip">${escapeHtml(r.tips || '')}</div>
+    </div>
+  `;
+  document.getElementById('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+document.getElementById('generate').addEventListener('click', generateRecipe);
+</script>
+</body>
+</html>
