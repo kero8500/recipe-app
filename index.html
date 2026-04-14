@@ -360,6 +360,166 @@
     background: #ffd0d0;
   }
 
+  /* Shopping list button in recipe card */
+  .shop-add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: auto;
+    box-shadow: none;
+    margin-top: 6px;
+    margin-left: 6px;
+  }
+  .shop-add-btn.not-added {
+    color: #2e7d32;
+    background: #e8f5e9;
+    border: 1.5px solid #a5d6a7;
+  }
+  .shop-add-btn.not-added:active {
+    background: #c8e6c9;
+  }
+  .shop-add-btn.added {
+    color: #fff;
+    background: linear-gradient(135deg, #66bb6a, #2e7d32);
+    border: 1.5px solid transparent;
+    cursor: default;
+  }
+
+  /* Shopping list section styles */
+  .shopping-section {
+    margin-top: 8px;
+  }
+  .shopping-section .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .shopping-section .section-header h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #8b4513;
+  }
+  .shopping-section .section-header .shop-actions {
+    display: flex;
+    gap: 6px;
+  }
+  .shop-clear-btn, .shop-clear-checked-btn {
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    width: auto;
+    box-shadow: none;
+  }
+  .shop-clear-checked-btn {
+    color: #2e7d32;
+    background: #e8f5e9;
+    border: 1.5px solid #a5d6a7;
+  }
+  .shop-clear-checked-btn:active {
+    background: #c8e6c9;
+  }
+  .shop-clear-btn {
+    color: #8b4513;
+    background: #fff3e6;
+    border: 1.5px solid #ffd4b0;
+  }
+  .shop-clear-btn:active {
+    background: #ffe8d6;
+  }
+  .shop-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid #ffd4b0;
+    transition: background 0.15s;
+    gap: 10px;
+  }
+  .shop-item:last-child { border-bottom: none; }
+  .shop-item.checked {
+    opacity: 0.55;
+  }
+  .shop-item.checked .shop-item-name,
+  .shop-item.checked .shop-item-amount {
+    text-decoration: line-through;
+    color: #999;
+  }
+  .shop-item-check {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    border: 2px solid #a5d6a7;
+    border-radius: 5px;
+    cursor: pointer;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+  .shop-item-check:checked {
+    background: #2e7d32;
+    border-color: #2e7d32;
+  }
+  .shop-item-check:checked::after {
+    content: '';
+    display: block;
+    width: 5px;
+    height: 10px;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+    margin-bottom: 2px;
+  }
+  .shop-item-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .shop-item-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+  }
+  .shop-item-amount {
+    font-size: 13px;
+    color: #666;
+    margin-left: 6px;
+  }
+  .shop-item-recipe {
+    font-size: 11px;
+    color: #8b4513;
+    margin-top: 1px;
+  }
+  .shop-delete-btn {
+    padding: 2px 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #c33;
+    background: #ffe0e0;
+    border: 1px solid #ffc0c0;
+    border-radius: 6px;
+    cursor: pointer;
+    width: auto;
+    box-shadow: none;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+  .shop-delete-btn:active {
+    background: #ffd0d0;
+  }
+
   /* #14: Small smartphone (max-width: 480px) */
   @media (max-width: 480px) {
     header h1 { font-size: 22px; }
@@ -452,6 +612,7 @@
   <!-- #15: aria-live for screen reader updates -->
   <div id="result" aria-live="polite"></div>
   <div id="favorites-container"></div>
+  <div id="shopping-container"></div>
   <div id="history-container"></div>
 </div>
 
@@ -724,6 +885,179 @@ function updateFavButtonInResult() {
   favBtn.textContent = faved ? '❤️ お気に入り済み' : '🤍 お気に入りに追加';
 }
 
+// --- Shopping list management ---
+const SHOPPING_KEY = 'recipe_shopping_list';
+
+function loadShoppingList() {
+  try {
+    return JSON.parse(localStorage.getItem(SHOPPING_KEY)) || [];
+  } catch {
+    return [];
+  }
+}
+
+function saveShoppingList(list) {
+  try {
+    localStorage.setItem(SHOPPING_KEY, JSON.stringify(list));
+  } catch (e) {
+    if (e.name === 'QuotaExceededError') {
+      alert('ストレージの容量が不足しています。買い物リストを整理してください。');
+    }
+  }
+}
+
+function addIngredientsToShoppingList(recipe) {
+  const list = loadShoppingList();
+  const ingredients = recipe.ingredients || [];
+  const recipeName = recipe.name || '名前なし';
+  const now = new Date().toISOString();
+  let addedCount = 0;
+
+  ingredients.forEach((ing, idx) => {
+    const name = (ing.name || '').trim();
+    if (!name) return;
+    // Deduplicate by ingredient name (regardless of recipe)
+    const exists = list.some(item => item.name === name);
+    if (!exists) {
+      list.push({
+        id: 'shop_' + Date.now() + '_' + idx,
+        name: name,
+        amount: (ing.amount || '').trim(),
+        recipeName: recipeName,
+        checked: false,
+        addedAt: now,
+      });
+      addedCount++;
+    }
+  });
+
+  saveShoppingList(list);
+  renderShoppingList();
+  return addedCount;
+}
+
+function isRecipeInShoppingList(recipe) {
+  const list = loadShoppingList();
+  const ingredients = recipe.ingredients || [];
+  if (ingredients.length === 0) return false;
+  // Consider "added" if ALL ingredients are already in the list
+  return ingredients.every(ing => {
+    const name = (ing.name || '').trim();
+    if (!name) return true; // skip empty names
+    return list.some(item => item.name === name);
+  });
+}
+
+function toggleShoppingItemCheck(id) {
+  const list = loadShoppingList();
+  const item = list.find(i => i.id === id);
+  if (item) {
+    item.checked = !item.checked;
+    saveShoppingList(list);
+    renderShoppingList();
+  }
+}
+
+function removeShoppingItem(id) {
+  let list = loadShoppingList();
+  list = list.filter(i => i.id !== id);
+  saveShoppingList(list);
+  renderShoppingList();
+  updateShopButtonInResult();
+}
+
+function removeCheckedShoppingItems() {
+  let list = loadShoppingList();
+  list = list.filter(i => !i.checked);
+  saveShoppingList(list);
+  renderShoppingList();
+  updateShopButtonInResult();
+}
+
+function clearShoppingList() {
+  localStorage.removeItem(SHOPPING_KEY);
+  renderShoppingList();
+  updateShopButtonInResult();
+}
+
+function updateShopButtonInResult() {
+  const shopBtn = document.querySelector('#result .shop-add-btn');
+  if (!shopBtn || !shopBtn._recipe) return;
+  const added = isRecipeInShoppingList(shopBtn._recipe);
+  shopBtn.className = 'shop-add-btn ' + (added ? 'added' : 'not-added');
+  shopBtn.textContent = added ? '✅ 買い物リストに追加済み' : '🛒 買い物リストに追加';
+}
+
+function renderShoppingList() {
+  const container = document.getElementById('shopping-container');
+  const list = loadShoppingList();
+  if (list.length === 0) {
+    container.innerHTML = '';
+    return;
+  }
+
+  const checkedCount = list.filter(i => i.checked).length;
+  const items = list.map(item => {
+    const checkedClass = item.checked ? ' checked' : '';
+    const checkedAttr = item.checked ? ' checked' : '';
+    return `<div class="shop-item${checkedClass}" data-id="${escapeHtml(item.id)}">
+      <input type="checkbox" class="shop-item-check" data-id="${escapeHtml(item.id)}"${checkedAttr} aria-label="${escapeHtml(item.name)}の購入チェック">
+      <div class="shop-item-info">
+        <span class="shop-item-name">${escapeHtml(item.name)}</span>
+        <span class="shop-item-amount">${escapeHtml(item.amount)}</span>
+        <div class="shop-item-recipe">${escapeHtml(item.recipeName)}</div>
+      </div>
+      <button class="shop-delete-btn" data-id="${escapeHtml(item.id)}" aria-label="${escapeHtml(item.name)}を削除">×</button>
+    </div>`;
+  }).join('');
+
+  const clearCheckedBtn = checkedCount > 0
+    ? `<button class="shop-clear-checked-btn" id="clear-checked-shopping">購入済みを削除</button>`
+    : '';
+
+  container.innerHTML = `
+    <div class="card shopping-section">
+      <div class="section-header">
+        <h3>🛒 買い物リスト（${list.length}品）</h3>
+        <div class="shop-actions">
+          ${clearCheckedBtn}
+          <button class="shop-clear-btn" id="clear-shopping">リストをクリア</button>
+        </div>
+      </div>
+      ${items}
+    </div>
+  `;
+
+  // Event: clear all
+  document.getElementById('clear-shopping').addEventListener('click', () => {
+    if (confirm('買い物リストをすべてクリアしますか？')) {
+      clearShoppingList();
+    }
+  });
+
+  // Event: clear checked
+  const clearCheckedEl = document.getElementById('clear-checked-shopping');
+  if (clearCheckedEl) {
+    clearCheckedEl.addEventListener('click', () => {
+      removeCheckedShoppingItems();
+    });
+  }
+
+  // Event: checkboxes
+  container.querySelectorAll('.shop-item-check').forEach(cb => {
+    cb.addEventListener('change', () => {
+      toggleShoppingItemCheck(cb.dataset.id);
+    });
+  });
+
+  // Event: delete buttons
+  container.querySelectorAll('.shop-delete-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      removeShoppingItem(btn.dataset.id);
+    });
+  });
+}
+
 // #15: Chip toggle with aria-pressed update
 function toggleChip(chip, group) {
   const wasActive = chip.classList.contains('active');
@@ -900,7 +1234,7 @@ async function generateRecipe() {
 }
 
 function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]);
 }
 
 function renderRecipe(r, addHistory) {
@@ -914,6 +1248,10 @@ function renderRecipe(r, addHistory) {
   const favBtnClass = faved ? 'fav-btn faved' : 'fav-btn not-faved';
   const favBtnText = faved ? '❤️ お気に入り済み' : '🤍 お気に入りに追加';
 
+  const shopAdded = isRecipeInShoppingList(r);
+  const shopBtnClass = shopAdded ? 'shop-add-btn added' : 'shop-add-btn not-added';
+  const shopBtnText = shopAdded ? '✅ 買い物リストに追加済み' : '🛒 買い物リストに追加';
+
   document.getElementById('result').innerHTML = `
     <div class="card recipe">
       <h2>${escapeHtml(r.name || '')}${faved ? ' ⭐' : ''}</h2>
@@ -925,6 +1263,7 @@ function renderRecipe(r, addHistory) {
       </div>
       <div class="section-title">食材</div>
       <ul class="ing">${ingredients}</ul>
+      <button class="${shopBtnClass}" id="shop-toggle">${shopBtnText}</button>
       <div class="section-title">作り方</div>
       <ol class="steps">${steps}</ol>
       <div class="section-title">栄養素</div>
@@ -962,6 +1301,16 @@ function renderRecipe(r, addHistory) {
     }
   });
 
+  // Attach shopping list add handler
+  const shopBtn = document.getElementById('shop-toggle');
+  shopBtn._recipe = r;
+  shopBtn.addEventListener('click', () => {
+    if (isRecipeInShoppingList(r)) return; // already added
+    addIngredientsToShoppingList(r);
+    shopBtn.className = 'shop-add-btn added';
+    shopBtn.textContent = '✅ 買い物リストに追加済み';
+  });
+
   document.getElementById('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   // #8: Save to history (only for new recipes, not history re-display)
@@ -972,8 +1321,9 @@ function renderRecipe(r, addHistory) {
 
 document.getElementById('generate').addEventListener('click', generateRecipe);
 
-// Initialize favorites and history on load
+// Initialize favorites, shopping list, and history on load
 renderFavorites();
+renderShoppingList();
 renderHistory();
 </script>
 </body>
