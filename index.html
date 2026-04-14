@@ -858,6 +858,98 @@
     text-align: center;
     font-weight: 700;
   }
+  /* Cooking-mode ingredients panel (collapsible) */
+  .cooking-ing-panel {
+    border-top: 2px solid #ffcc99;
+    background: rgba(255, 255, 255, 0.85);
+    max-height: 45vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .cooking-ing-toggle {
+    width: 100%;
+    padding: 10px 16px;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    color: #8b4513;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+  }
+  .cooking-ing-toggle .chev { transition: transform 0.2s; font-size: 12px; }
+  .cooking-ing-panel.open .cooking-ing-toggle .chev { transform: rotate(180deg); }
+  .cooking-ing-list {
+    display: none;
+    padding: 4px 16px 14px;
+    overflow-y: auto;
+    font-size: 14px;
+    color: #333;
+  }
+  .cooking-ing-panel.open .cooking-ing-list { display: block; }
+  .cooking-ing-list .dish-group {
+    margin-bottom: 10px;
+  }
+  .cooking-ing-list .dish-group-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #e8590c;
+    margin-bottom: 4px;
+    padding-bottom: 2px;
+    border-bottom: 1px dashed #ffcc99;
+  }
+  .cooking-ing-list ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .cooking-ing-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+    gap: 10px;
+  }
+  .cooking-ing-list li span:first-child { color: #333; }
+  .cooking-ing-list li span:last-child { color: #8b4513; font-weight: 600; white-space: nowrap; }
+
+  /* AI-generated recipe image */
+  .recipe-image-box {
+    margin: 10px 0 14px;
+    text-align: center;
+  }
+  .recipe-image-box img {
+    max-width: 100%;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+    background: #f5f5f5;
+  }
+  .recipe-image-box .img-loading {
+    display: inline-block;
+    padding: 30px 20px;
+    color: #8b4513;
+    font-size: 13px;
+  }
+  .recipe-image-btn {
+    display: inline-block;
+    width: auto;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    background: linear-gradient(135deg, #ab47bc, #7b1fa2);
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(123, 31, 162, 0.3);
+    margin-bottom: 6px;
+  }
+  .recipe-image-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .recipe-image-note { font-size: 11px; color: #888; margin-top: 4px; }
+
   /* Cook button in recipe */
   .cook-btn {
     display: inline-block;
@@ -1689,6 +1781,10 @@ function renderRecipe(r, addHistory) {
         <span>⏱ ${escapeHtml(r.time || '-')}</span>
         <span>📊 ${escapeHtml(r.difficulty || '-')}</span>
         <span>💰 ${escapeHtml(r.cost || '-')}</span>
+      </div>
+      <div class="recipe-image-box" id="recipe-image-box">
+        <button class="recipe-image-btn" id="gen-image-btn" type="button">🎨 完成イメージをAIで生成</button>
+        <div class="recipe-image-note">※ AIによる参考画像です（pollinations.ai・無料）</div>
       </div>
       <div class="section-title">食材</div>
       <ul class="ing">${ingredients}</ul>
@@ -2523,6 +2619,29 @@ function buildCookingSteps(recipe) {
   }
   return steps;
 }
+function buildCookingIngredientsHtml(recipe) {
+  // Build ingredients HTML for cooking mode panel. Supports both single recipe and meal (dishes).
+  function ingListHtml(list) {
+    if (!Array.isArray(list) || list.length === 0) return '';
+    return '<ul>' + list.map(function (i) {
+      return '<li><span>' + escapeHtml(i.name || '') + '</span><span>' + escapeHtml(i.amount || '') + '</span></li>';
+    }).join('') + '</ul>';
+  }
+  if (recipe && Array.isArray(recipe.ingredients) && recipe.ingredients.length) {
+    return ingListHtml(recipe.ingredients);
+  }
+  if (recipe && Array.isArray(recipe.dishes)) {
+    return recipe.dishes.map(function (dish) {
+      var title = [dish.role, dish.name].filter(Boolean).map(escapeHtml).join(' ');
+      return '<div class="dish-group">' +
+        (title ? '<div class="dish-group-title">' + title + '</div>' : '') +
+        ingListHtml(dish.ingredients || []) +
+        '</div>';
+    }).join('');
+  }
+  return '<div style="color:#888;font-size:12px;">材料情報がありません</div>';
+}
+
 function openCookingMode(recipe) {
   var steps = buildCookingSteps(recipe);
   if (steps.length === 0) { alert('手順がありません。'); return; }
@@ -2542,6 +2661,12 @@ function openCookingMode(recipe) {
       '<button type="button" id="cook-prev">◀ 前</button>' +
       '<div class="cooking-progress" id="cook-prog"></div>' +
       '<button type="button" id="cook-next">次 ▶</button>' +
+    '</div>' +
+    '<div class="cooking-ing-panel" id="cook-ing-panel">' +
+      '<button type="button" class="cooking-ing-toggle" id="cook-ing-toggle" aria-expanded="false">' +
+        '<span>🥬 材料・分量を確認</span><span class="chev">▲</span>' +
+      '</button>' +
+      '<div class="cooking-ing-list" id="cook-ing-list">' + buildCookingIngredientsHtml(recipe) + '</div>' +
     '</div>';
   document.body.appendChild(overlay);
   document.body.style.overflow = 'hidden';
@@ -2569,6 +2694,15 @@ function openCookingMode(recipe) {
   overlay.querySelector('#cook-prev').addEventListener('click', prev);
   overlay.querySelector('#cook-next').addEventListener('click', next);
   overlay.querySelector('.cooking-close').addEventListener('click', close);
+  // Ingredients panel toggle
+  var ingPanel = overlay.querySelector('#cook-ing-panel');
+  var ingToggle = overlay.querySelector('#cook-ing-toggle');
+  if (ingToggle && ingPanel) {
+    ingToggle.addEventListener('click', function () {
+      var opened = ingPanel.classList.toggle('open');
+      ingToggle.setAttribute('aria-expanded', opened ? 'true' : 'false');
+    });
+  }
   // Swipe
   var startX = null;
   overlay.addEventListener('touchstart', function (e) { startX = e.touches[0].clientX; }, { passive: true });
@@ -2601,11 +2735,75 @@ document.getElementById('result').addEventListener('click', function (e) {
     if (meal) openCookingMode(meal);
   } else if (e.target && e.target.id === 'adjust-go') {
     adjustCurrentRecipe();
+  } else if (e.target && e.target.id === 'gen-image-btn') {
+    var fbtn = document.getElementById('fav-toggle');
+    var r = fbtn && fbtn._recipe;
+    if (r) generateFoodImage(r);
   } else if (e.target && e.target.classList && e.target.classList.contains('chip') && e.target.dataset.adjust) {
     var input = document.getElementById('adjust-input');
     if (input) input.value = e.target.dataset.adjust;
   }
 });
+
+// --- AI food image generation (pollinations.ai, free, no-auth) ---
+function buildFoodImagePrompt(recipe) {
+  var name = (recipe && recipe.name) || 'Japanese home-cooked dish';
+  // Include a few key ingredients as hints to improve fidelity
+  var ings = [];
+  if (Array.isArray(recipe.ingredients)) {
+    ings = recipe.ingredients.slice(0, 5).map(function (i) { return i.name; }).filter(Boolean);
+  }
+  var hints = ings.length ? (' with ' + ings.join(', ')) : '';
+  return name + hints +
+    ', Japanese home cooking, realistic food photography, shot from above, natural daylight, on a ceramic plate, appetizing, high detail, 8k';
+}
+function generateFoodImage(recipe) {
+  var box = document.getElementById('recipe-image-box');
+  if (!box) return;
+  var btn = document.getElementById('gen-image-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '生成中...'; }
+  box.innerHTML = '<div class="img-loading"><div class="spinner" style="display:inline-block;vertical-align:middle;margin-right:8px;"></div>完成イメージを生成しています...</div>';
+  var prompt = buildFoodImagePrompt(recipe);
+  // Deterministic seed so same recipe yields same image (browser cache friendly)
+  var seed = 0;
+  for (var i = 0; i < prompt.length; i++) { seed = ((seed << 5) - seed + prompt.charCodeAt(i)) | 0; }
+  seed = Math.abs(seed) % 1000000;
+  var url = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(prompt) +
+    '?width=768&height=512&seed=' + seed + '&nologo=true&model=flux';
+  var img = new Image();
+  img.alt = recipe.name || 'AI generated food image';
+  img.onload = function () {
+    box.innerHTML = '';
+    box.appendChild(img);
+    var note = document.createElement('div');
+    note.className = 'recipe-image-note';
+    note.textContent = '※ AIによる参考画像です（pollinations.ai・無料）';
+    box.appendChild(note);
+    var regen = document.createElement('button');
+    regen.className = 'recipe-image-btn';
+    regen.type = 'button';
+    regen.id = 'gen-image-btn';
+    regen.textContent = '🔁 別のイメージを生成';
+    regen.style.marginTop = '6px';
+    regen.addEventListener('click', function () {
+      // Use a fresh random seed to get a different image
+      var nurl = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(prompt) +
+        '?width=768&height=512&seed=' + Math.floor(Math.random() * 1000000) + '&nologo=true&model=flux';
+      box.innerHTML = '<div class="img-loading"><div class="spinner" style="display:inline-block;vertical-align:middle;margin-right:8px;"></div>生成中...</div>';
+      var ni = new Image();
+      ni.alt = img.alt;
+      ni.onload = function () { box.innerHTML = ''; box.appendChild(ni); box.appendChild(note); box.appendChild(regen); };
+      ni.onerror = function () { box.innerHTML = '<div style="color:#c00;font-size:12px;">画像生成に失敗しました。しばらく待ってから再試行してください。</div>'; };
+      ni.src = nurl;
+    });
+    box.appendChild(regen);
+  };
+  img.onerror = function () {
+    box.innerHTML = '<button class="recipe-image-btn" id="gen-image-btn" type="button">🎨 完成イメージをAIで生成</button>' +
+      '<div class="recipe-image-note" style="color:#c00;">画像生成に失敗しました。再度お試しください。</div>';
+  };
+  img.src = url;
+}
 
 // --- Adjust recipe (dialogue refinement) ---
 async function adjustCurrentRecipe() {
