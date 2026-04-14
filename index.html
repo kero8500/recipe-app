@@ -1885,7 +1885,8 @@ function savePrefs(prefs) {
     const prefs = loadPrefs();
     document.getElementById('craving').value = '';
     document.getElementById('ingredients').value = '';
-    document.getElementById('allergy').value = '';
+    // Reset allergy to saved default (fallback to empty)
+    document.getElementById('allergy').value = prefs.allergy || DEFAULT_ALLERGY;
     // Reset servings/time to saved defaults (fallback to built-ins)
     const servingsEl = document.getElementById('servings');
     servingsEl.value = [...servingsEl.options].some(o => o.value === prefs.servings) ? prefs.servings : DEFAULT_SERVINGS;
