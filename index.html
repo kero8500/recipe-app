@@ -1478,6 +1478,270 @@
     body.has-sticky-cta #generate-weekly { display: none; }
   }
 
+
+  /* === Phase 2: Shopping categories / Favorites grid === */
+  /* Shopping category sections */
+  .shop-cat-group { margin-top: 10px; }
+  .shop-cat-head {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #fff7f0;
+    color: #8b4513;
+    font-weight: 700;
+    font-size: 13px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border-left: 4px solid #e8590c;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .shop-cat-head .cat-count {
+    font-size: 11px;
+    font-weight: 600;
+    color: #8b4513;
+    opacity: 0.7;
+  }
+  .shop-share-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 6px 0 10px;
+  }
+  .shop-share-row button {
+    flex: 1 1 auto;
+    min-height: 44px;
+    padding: 10px 12px;
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: 10px;
+    border: 1.5px solid #ffd4b0;
+    background: #fff;
+    color: #8b4513;
+    cursor: pointer;
+    box-shadow: none;
+  }
+  .shop-share-row button.primary {
+    background: linear-gradient(135deg,#ff8c42,#e8590c);
+    color: #fff;
+    border: none;
+  }
+
+  /* Favorites/History tabs + grid */
+  .fav-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .fav-tabs button {
+    flex: 1;
+    min-height: 40px;
+    padding: 8px 10px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #8b4513;
+    background: #fff;
+    border: 1.5px solid #ffd4b0;
+    border-radius: 10px;
+    cursor: pointer;
+    box-shadow: none;
+  }
+  .fav-tabs button.active {
+    background: #e8590c;
+    color: #fff;
+    border-color: #e8590c;
+  }
+  .fav-collection-bar {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 4px 0 8px;
+    margin-bottom: 6px;
+    scrollbar-width: thin;
+  }
+  .fav-collection-bar::-webkit-scrollbar { height: 4px; }
+  .fav-collection-bar button {
+    flex: 0 0 auto;
+    min-height: 36px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #8b4513;
+    background: #fff3e6;
+    border: 1px solid transparent;
+    border-radius: 18px;
+    white-space: nowrap;
+    cursor: pointer;
+    box-shadow: none;
+  }
+  .fav-collection-bar button.active {
+    background: #e8590c;
+    color: #fff;
+    border-color: #e8590c;
+  }
+  .fav-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  @media (min-width: 760px) {
+    .fav-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  .fav-card {
+    position: relative;
+    background: #fff;
+    border: 1px solid #ffd4b0;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(139,69,19,0.06);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+  }
+  .fav-card:active { opacity: 0.85; }
+  .fav-card .fav-thumb {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background: #fff3e6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 56px;
+    color: #e8590c;
+    overflow: hidden;
+  }
+  .fav-card .fav-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .fav-card .fav-meta {
+    padding: 8px 10px 10px;
+  }
+  .fav-card .fav-meta .fav-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: #333;
+    margin: 0 0 4px;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .fav-card .fav-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+  }
+  .fav-card .fav-tag-chip {
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    background: #fff3e6;
+    color: #8b4513;
+  }
+  .fav-card .fav-del {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.9);
+    border: 1px solid #ffd4b0;
+    color: #c33;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .fav-card .fav-tag-btn {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.9);
+    border: 1px solid #ffd4b0;
+    color: #8b4513;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Tag picker modal */
+  .tag-picker-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 10002;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    animation: fadeIn 0.15s ease-out;
+  }
+  .tag-picker {
+    width: 100%;
+    max-width: 520px;
+    background: #fff;
+    border-radius: 18px 18px 0 0;
+    padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+  .tag-picker h4 {
+    margin: 0 0 12px;
+    font-size: 15px;
+    color: #8b4513;
+  }
+  .tag-picker .tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .tag-picker .tag-list button {
+    min-height: 40px;
+    padding: 8px 14px;
+    font-size: 13px;
+    border-radius: 18px;
+    background: #fff3e6;
+    color: #8b4513;
+    border: 1.5px solid transparent;
+    cursor: pointer;
+    box-shadow: none;
+  }
+  .tag-picker .tag-list button.active {
+    background: #e8590c;
+    color: #fff;
+    border-color: #e8590c;
+  }
+  .tag-picker .tag-actions {
+    display: flex;
+    gap: 8px;
+  }
+  .tag-picker .tag-actions button {
+    flex: 1;
+    min-height: 44px;
+    padding: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+  .tag-picker .tag-cancel { background: #fff; color: #8b4513; border: 1.5px solid #ffd4b0; box-shadow: none; }
+  .tag-picker .tag-save { background: #e8590c; color: #fff; border: none; }
+  .tag-picker input[type="text"] {
+    width: 100%;
+    padding: 8px 10px;
+    margin-bottom: 10px;
+    border: 1.5px solid #ffd4b0;
+    border-radius: 8px;
+    font-size: 14px;
+  }
 </style>
 </head>
 <body>
@@ -4324,6 +4588,485 @@ renderFridge();
   try { if (typeof window.renderShoppingList === 'function') window.renderShoppingList(); } catch (_) {}
   try { if (typeof window.renderFavorites === 'function') window.renderFavorites(); } catch (_) {}
   try { if (typeof window.renderFridge === 'function') window.renderFridge(); } catch (_) {}
+})();
+
+
+/* === Phase 2: Shopping auto-categorize + share & Favorites grid/collections === */
+(function () {
+  // ---- Shopping categorization ----
+  var CAT_ORDER = ['produce', 'meat', 'dairy', 'seasoning', 'frozen', 'other'];
+  var CAT_LABELS = {
+    produce: '🥬 野菜・果物',
+    meat: '🍗 肉・魚',
+    dairy: '🥛 乳製品・卵',
+    seasoning: '🧂 調味料',
+    frozen: '❄️ 冷凍',
+    other: '📦 その他',
+  };
+  var CAT_RULES = [
+    { cat: 'meat', words: ['鶏', '豚', '牛', 'ひき肉', 'ミンチ', 'ベーコン', 'ハム', 'ソーセージ', 'ウインナー', '魚', '鮭', 'さけ', 'サケ', '鯛', 'たら', 'タラ', 'いわし', 'さば', '鯖', '鰯', '秋刀魚', 'サンマ', 'さんま', 'えび', '海老', 'エビ', 'いか', 'イカ', 'たこ', 'タコ', '貝', 'あさり', 'しじみ', 'ホタテ', 'ほたて', 'まぐろ', 'マグロ', 'ツナ'] },
+    { cat: 'dairy', words: ['牛乳', 'ミルク', 'チーズ', 'ヨーグルト', 'バター', '生クリーム', '豆乳', '卵', 'たまご', 'タマゴ', '玉子'] },
+    { cat: 'frozen', words: ['冷凍', 'アイス', 'シャーベット'] },
+    { cat: 'seasoning', words: ['しょうゆ', '醤油', 'みりん', '味醂', '砂糖', '塩', 'こしょう', '胡椒', '味噌', 'みそ', '酒', '料理酒', '酢', '油', 'オイル', 'ごま油', 'オリーブオイル', 'だし', '出汁', 'ソース', 'ケチャップ', 'マヨネーズ', 'マヨ', 'めんつゆ', 'ポン酢', 'ドレッシング', 'コンソメ', 'ブイヨン', '鶏ガラ', 'ウスター', '七味', '一味', '山椒', 'カレー粉', 'コショー', 'スパイス', 'ハーブ', 'バジル', 'オレガノ', '片栗粉', '薄力粉', '小麦粉', '強力粉', 'パン粉', 'ベーキングパウダー', '重曹', 'ごま', '胡麻'] },
+    { cat: 'produce', words: ['キャベツ', 'レタス', '白菜', 'ほうれん草', 'ほうれんそう', '小松菜', '春菊', '水菜', 'ねぎ', '玉ねぎ', 'たまねぎ', '長ねぎ', '長ネギ', '万能ねぎ', 'にんにく', 'ニンニク', 'しょうが', '生姜', 'ショウガ', 'にんじん', 'ニンジン', '人参', 'じゃがいも', 'ジャガイモ', 'さつまいも', 'サツマイモ', '里芋', 'さといも', 'きゅうり', 'キュウリ', 'なす', 'ナス', '茄子', 'トマト', 'ミニトマト', 'ピーマン', 'パプリカ', 'ブロッコリー', 'カリフラワー', 'アスパラ', 'もやし', 'モヤシ', 'きのこ', 'しいたけ', 'えのき', 'しめじ', 'まいたけ', 'エリンギ', 'マッシュルーム', 'レモン', 'りんご', 'リンゴ', 'みかん', 'バナナ', 'いちご', 'ぶどう', 'かぼちゃ', 'カボチャ', 'とうもろこし', 'コーン', 'ごぼう', 'ゴボウ', '大根', 'だいこん', 'かぶ', 'カブ', 'れんこん', 'レンコン', '豆腐', '納豆', '油揚げ', 'こんにゃく', 'しらたき', 'わかめ', 'のり', '海苔', 'ひじき'] },
+  ];
+  function categorize(name) {
+    if (!name) return 'other';
+    var n = String(name);
+    for (var i = 0; i < CAT_RULES.length; i++) {
+      var r = CAT_RULES[i];
+      for (var j = 0; j < r.words.length; j++) {
+        if (n.indexOf(r.words[j]) !== -1) return r.cat;
+      }
+    }
+    return 'other';
+  }
+
+  // Store category preference on each shopping item (cached by name)
+  function augmentWithCategory(list) {
+    return list.map(function (item) {
+      var it = Object.assign({}, item);
+      if (!it.category) it.category = categorize(it.name);
+      return it;
+    });
+  }
+
+  function sortedByCat(list) {
+    // Separate checked to bottom, then group by category in CAT_ORDER
+    var uncheck = list.filter(function (i) { return !i.checked; });
+    var checked = list.filter(function (i) { return i.checked; });
+    var groups = {};
+    uncheck.forEach(function (it) {
+      var c = it.category || categorize(it.name);
+      if (!groups[c]) groups[c] = [];
+      groups[c].push(it);
+    });
+    return { groups: groups, checked: checked };
+  }
+
+  function htmlEscape(s) { return (s == null ? '' : String(s)).replace(/[&<>"']/g, function (c) { return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]; }); }
+
+  // Override renderShoppingList to render with categories + share UI
+  var prevRenderShop = window.renderShoppingList;
+  window.renderShoppingList = function () {
+    var container = document.getElementById('shopping-container');
+    if (!container) return;
+    var list = loadShoppingList();
+    if (list.length === 0) { container.innerHTML = ''; return; }
+    var total = list.length;
+    var checkedCount = list.filter(function (i) { return i.checked; }).length;
+    var grouped = sortedByCat(list);
+    var groupsHtml = CAT_ORDER.map(function (cat) {
+      var items = grouped.groups[cat];
+      if (!items || items.length === 0) return '';
+      return '<div class="shop-cat-group" data-cat="' + cat + '">'
+        + '<div class="shop-cat-head">'
+          + '<span>' + CAT_LABELS[cat] + '</span>'
+          + '<span class="cat-count">' + items.length + '品</span>'
+        + '</div>'
+        + items.map(itemHtml).join('')
+        + '</div>';
+    }).join('');
+    var checkedHtml = grouped.checked.length > 0
+      ? ('<div class="shop-cat-group" data-cat="checked">'
+          + '<div class="shop-cat-head" style="border-left-color:#8aa; opacity:0.75;"><span>✓ 購入済み</span><span class="cat-count">' + grouped.checked.length + '品</span></div>'
+          + grouped.checked.map(itemHtml).join('')
+          + '</div>')
+      : '';
+    var clearCheckedBtn = checkedCount > 0
+      ? '<button class="shop-clear-checked-btn" id="clear-checked-shopping">購入済みを削除</button>'
+      : '';
+    container.innerHTML = ''
+      + '<div class="card shopping-section">'
+        + '<div class="section-header">'
+          + '<h3>🛒 買い物リスト（' + total + '品）</h3>'
+          + '<div class="shop-actions">'
+            + clearCheckedBtn
+            + '<button class="shop-clear-btn" id="clear-shopping">リストをクリア</button>'
+          + '</div>'
+        + '</div>'
+        + '<div class="shop-share-row">'
+          + '<button type="button" class="primary" id="shop-share">📤 共有</button>'
+          + '<button type="button" id="shop-share-line">LINE</button>'
+          + '<button type="button" id="shop-share-mail">メール</button>'
+          + '<button type="button" id="shop-share-copy">コピー</button>'
+        + '</div>'
+        + groupsHtml
+        + checkedHtml
+      + '</div>';
+
+    function itemHtml(item) {
+      var checkedClass = item.checked ? ' checked' : '';
+      var checkedAttr = item.checked ? ' checked' : '';
+      return '<div class="shop-item' + checkedClass + '" data-id="' + htmlEscape(item.id) + '">'
+        + '<input type="checkbox" class="shop-item-check" data-id="' + htmlEscape(item.id) + '"' + checkedAttr + ' aria-label="' + htmlEscape(item.name) + 'の購入チェック">'
+        + '<div class="shop-item-info">'
+          + '<span class="shop-item-name">' + htmlEscape(item.name) + '</span>'
+          + '<span class="shop-item-amount">' + htmlEscape(item.amount || '') + '</span>'
+          + '<div class="shop-item-recipe">' + htmlEscape(item.recipeName || '') + '</div>'
+        + '</div>'
+        + '<button class="shop-delete-btn" data-id="' + htmlEscape(item.id) + '" aria-label="' + htmlEscape(item.name) + 'を削除">×</button>'
+      + '</div>';
+    }
+
+    // Wire handlers (same as original)
+    var clearAll = document.getElementById('clear-shopping');
+    if (clearAll) clearAll.addEventListener('click', function () {
+      if (confirm('買い物リストをすべてクリアしますか？')) clearShoppingList();
+    });
+    var clearChk = document.getElementById('clear-checked-shopping');
+    if (clearChk) clearChk.addEventListener('click', function () { removeCheckedShoppingItems(); });
+    container.querySelectorAll('.shop-item-check').forEach(function (cb) {
+      cb.addEventListener('change', function () { toggleShoppingItemCheck(cb.dataset.id); });
+    });
+    container.querySelectorAll('.shop-delete-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = btn.dataset.id;
+        var l = loadShoppingList();
+        var entry = l.find(function (i) { return i.id === id; });
+        removeShoppingItem(id);
+        if (entry && window.showSnackbar) {
+          window.showSnackbar('「' + entry.name + '」を削除しました', {
+            onAction: function () {
+              var l2 = loadShoppingList(); l2.push(entry); saveShoppingList(l2);
+              if (typeof window.renderShoppingList === 'function') window.renderShoppingList();
+            }
+          });
+        }
+      });
+    });
+
+    // Share handlers
+    function buildShareText() {
+      var lines = ['【買い物リスト】'];
+      CAT_ORDER.forEach(function (cat) {
+        var items = grouped.groups[cat];
+        if (!items || items.length === 0) return;
+        lines.push('');
+        lines.push(CAT_LABELS[cat]);
+        items.forEach(function (it) {
+          lines.push('・' + it.name + (it.amount ? '（' + it.amount + '）' : ''));
+        });
+      });
+      return lines.join('\n');
+    }
+    document.getElementById('shop-share').addEventListener('click', async function () {
+      var text = buildShareText();
+      if (navigator.share) {
+        try { await navigator.share({ title: '買い物リスト', text: text }); return; } catch (_) { /* fallthrough */ }
+      }
+      try {
+        await navigator.clipboard.writeText(text);
+        window.showSnackbar && window.showSnackbar('買い物リストをコピーしました');
+      } catch (_) {
+        window.showSnackbar && window.showSnackbar('共有に失敗しました');
+      }
+    });
+    document.getElementById('shop-share-line').addEventListener('click', function () {
+      var text = buildShareText();
+      var url = 'https://line.me/R/msg/text/?' + encodeURIComponent(text);
+      window.open(url, '_blank');
+    });
+    document.getElementById('shop-share-mail').addEventListener('click', function () {
+      var text = buildShareText();
+      var href = 'mailto:?subject=' + encodeURIComponent('買い物リスト') + '&body=' + encodeURIComponent(text);
+      window.location.href = href;
+    });
+    document.getElementById('shop-share-copy').addEventListener('click', async function () {
+      try { await navigator.clipboard.writeText(buildShareText()); window.showSnackbar && window.showSnackbar('コピーしました'); }
+      catch (_) { window.showSnackbar && window.showSnackbar('コピーに失敗しました'); }
+    });
+
+    // Re-attach swipe (phase1 patch)
+    container.querySelectorAll('.shop-item').forEach(function (item) {
+      if (!item._swipeBound && typeof window.attachSwipe === 'function') {
+        var id = item.getAttribute('data-id');
+        window.attachSwipe(item, {
+          leftHint: '🗑 削除',
+          rightHint: '✓ 完了',
+          onLeft: function () {
+            var l = loadShoppingList();
+            var entry = l.find(function (i) { return i.id === id; });
+            if (!entry) return;
+            removeShoppingItem(id);
+            window.showSnackbar('「' + entry.name + '」を削除しました', {
+              onAction: function () {
+                var l2 = loadShoppingList(); l2.push(entry); saveShoppingList(l2);
+                window.renderShoppingList();
+              }
+            });
+          },
+          onRight: function () { toggleShoppingItemCheck(id); },
+          rightOutAnim: false
+        });
+      }
+    });
+  };
+
+  // ---- Favorites grid + collections + tabs (with history) ----
+  var FAV_TABS_KEY = 'recipeFavActiveTab';
+  var FAV_COLLECTION_KEY = 'recipeFavActiveCollection';
+  function loadActiveTab() { try { return localStorage.getItem(FAV_TABS_KEY) || 'fav'; } catch (_) { return 'fav'; } }
+  function saveActiveTab(t) { try { localStorage.setItem(FAV_TABS_KEY, t); } catch (_) {} }
+  function loadActiveCol() { try { return localStorage.getItem(FAV_COLLECTION_KEY) || 'all'; } catch (_) { return 'all'; } }
+  function saveActiveCol(c) { try { localStorage.setItem(FAV_COLLECTION_KEY, c); } catch (_) {} }
+
+  var DEFAULT_TAGS = ['作り置き', '時短', '子供用', '主菜', '副菜', '節約'];
+  function allTagsIn(favorites) {
+    var set = {};
+    DEFAULT_TAGS.forEach(function (t) { set[t] = true; });
+    favorites.forEach(function (f) { (f.tags || []).forEach(function (t) { set[t] = true; }); });
+    return Object.keys(set);
+  }
+  function getTagsForFav(entry) { return Array.isArray(entry.tags) ? entry.tags : []; }
+  function setTagsForFav(id, tags) {
+    var favs = loadFavorites();
+    var idx = favs.findIndex(function (f) { return f.id === id; });
+    if (idx >= 0) {
+      favs[idx].tags = tags;
+      saveFavorites(favs);
+    }
+  }
+  function recipeEmoji(recipe) {
+    var n = (recipe && recipe.name) || '';
+    if (/ラーメン|麺|パスタ|うどん|そば/.test(n)) return '🍜';
+    if (/カレー/.test(n)) return '🍛';
+    if (/寿司|刺身/.test(n)) return '🍣';
+    if (/サラダ/.test(n)) return '🥗';
+    if (/スープ|汁|味噌汁/.test(n)) return '🍲';
+    if (/パン|サンド|トースト/.test(n)) return '🥪';
+    if (/ケーキ|スイーツ|デザート|プリン/.test(n)) return '🍰';
+    if (/卵|たまご|オムレツ/.test(n)) return '🍳';
+    if (/魚|鮭|さば|まぐろ/.test(n)) return '🐟';
+    if (/鶏|チキン|唐揚げ/.test(n)) return '🍗';
+    if (/豚|ポーク/.test(n)) return '🥓';
+    if (/牛|ビーフ|ステーキ|焼肉/.test(n)) return '🥩';
+    if (/丼|ご飯|ライス|チャーハン/.test(n)) return '🍚';
+    return '🍽';
+  }
+
+  var origRenderFav = window.renderFavorites;
+  window.renderFavorites = function () {
+    var container = document.getElementById('favorites-container');
+    if (!container) return;
+    var favorites = loadFavorites();
+    var history = (typeof loadHistory === 'function') ? loadHistory() : [];
+    if (favorites.length === 0 && history.length === 0) { container.innerHTML = ''; return; }
+    var activeTab = loadActiveTab();
+    if (activeTab === 'history' && history.length === 0) activeTab = 'fav';
+    if (activeTab === 'fav' && favorites.length === 0) activeTab = 'history';
+
+    var activeCol = loadActiveCol();
+    var tags = allTagsIn(favorites);
+    var colBar = activeTab === 'fav'
+      ? ('<div class="fav-collection-bar">'
+          + '<button type="button" data-col="all" class="' + (activeCol === 'all' ? 'active' : '') + '">すべて</button>'
+          + tags.map(function (t) {
+              return '<button type="button" data-col="' + htmlEscape(t) + '" class="' + (activeCol === t ? 'active' : '') + '">#' + htmlEscape(t) + '</button>';
+            }).join('')
+        + '</div>')
+      : '';
+
+    var filtered = favorites;
+    if (activeTab === 'fav' && activeCol !== 'all') {
+      filtered = favorites.filter(function (f) { return (f.tags || []).indexOf(activeCol) !== -1; });
+    }
+
+    var body = '';
+    if (activeTab === 'fav') {
+      if (filtered.length === 0) {
+        body = '<div style="color:#8b4513; font-size:13px; padding:14px 4px;">このコレクションに該当するレシピはまだありません。</div>';
+      } else {
+        body = '<div class="fav-grid">' + filtered.map(function (entry) {
+          var name = (entry.recipe && entry.recipe.name) || '名前なし';
+          var emoji = recipeEmoji(entry.recipe || {});
+          var img = (entry.recipe && (entry.recipe.imageUrl || entry.recipe.image)) || '';
+          var thumb = img
+            ? '<div class="fav-thumb"><img src="' + htmlEscape(img) + '" alt="' + htmlEscape(name) + '" loading="lazy"></div>'
+            : '<div class="fav-thumb">' + emoji + '</div>';
+          var tagsHtml = (entry.tags || []).map(function (t) { return '<span class="fav-tag-chip">#' + htmlEscape(t) + '</span>'; }).join('');
+          return '<div class="fav-card" data-id="' + htmlEscape(entry.id) + '">'
+            + '<button type="button" class="fav-tag-btn" data-id="' + htmlEscape(entry.id) + '" aria-label="タグを編集">🏷</button>'
+            + '<button type="button" class="fav-del" data-id="' + htmlEscape(entry.id) + '" aria-label="削除">×</button>'
+            + thumb
+            + '<div class="fav-meta">'
+              + '<div class="fav-name">' + htmlEscape(name) + '</div>'
+              + '<div class="fav-tags">' + tagsHtml + '</div>'
+            + '</div>'
+          + '</div>';
+        }).join('') + '</div>';
+      }
+    } else {
+      // history tab - delegate to renderHistory if present (or simple list)
+      body = '<div id="history-embed"></div>';
+    }
+
+    container.innerHTML = ''
+      + '<div class="card favorites-section">'
+        + '<div class="section-header">'
+          + '<h3>⭐ コレクション</h3>'
+          + (activeTab === 'fav' && favorites.length > 0
+             ? '<button class="fav-clear-btn" id="clear-favorites">すべてクリア</button>' : '')
+        + '</div>'
+        + '<div class="fav-tabs">'
+          + '<button type="button" data-tab="fav" class="' + (activeTab === 'fav' ? 'active' : '') + '">⭐ お気に入り（' + favorites.length + '）</button>'
+          + '<button type="button" data-tab="history" class="' + (activeTab === 'history' ? 'active' : '') + '">🕓 履歴（' + history.length + '）</button>'
+        + '</div>'
+        + colBar
+        + body
+      + '</div>';
+
+    // Tab switching
+    container.querySelectorAll('.fav-tabs button').forEach(function (b) {
+      b.addEventListener('click', function () { saveActiveTab(b.getAttribute('data-tab')); window.renderFavorites(); });
+    });
+    container.querySelectorAll('.fav-collection-bar button').forEach(function (b) {
+      b.addEventListener('click', function () { saveActiveCol(b.getAttribute('data-col')); window.renderFavorites(); });
+    });
+
+    if (activeTab === 'history') {
+      // Render the history into history-embed via existing renderHistory
+      // renderHistory writes into #history-container - we'll just inline-call it and move content
+      var tmpHost = document.getElementById('history-embed');
+      if (tmpHost && typeof renderHistory === 'function') {
+        // Move original history-container content here after renderHistory
+        renderHistory();
+        var hc = document.getElementById('history-container');
+        if (hc) {
+          tmpHost.innerHTML = hc.innerHTML;
+          // Re-wire clear history button inside our embed
+          var clearH = tmpHost.querySelector('#clear-history');
+          if (clearH) clearH.addEventListener('click', function () {
+            if (confirm('履歴をすべて削除しますか？')) { if (typeof clearHistory === 'function') clearHistory(); window.renderFavorites(); }
+          });
+          tmpHost.querySelectorAll('.history-item').forEach(function (item) {
+            item.addEventListener('click', function () {
+              var idx = parseInt(item.dataset.idx, 10);
+              var entry = loadHistory()[idx];
+              if (entry && entry.recipe) renderEntry(entry.recipe);
+            });
+          });
+          // Hide original history to avoid duplicate
+          hc.style.display = 'none';
+        }
+      }
+    } else {
+      // Show original history-container again (if was hidden)
+      var hc2 = document.getElementById('history-container');
+      if (hc2) hc2.style.display = '';
+    }
+
+    // Fav actions
+    var clearBtn = document.getElementById('clear-favorites');
+    if (clearBtn) clearBtn.addEventListener('click', function () {
+      if (confirm('お気に入りをすべて削除しますか？')) { clearFavorites(); updateFavButtonInResult(); }
+    });
+    container.querySelectorAll('.fav-card').forEach(function (card) {
+      var id = card.getAttribute('data-id');
+      // Open recipe on tap (but ignore taps on buttons)
+      card.addEventListener('click', function (e) {
+        if (e.target.closest('.fav-del, .fav-tag-btn')) return;
+        var favs = loadFavorites();
+        var ent = favs.find(function (f) { return f.id === id; });
+        if (ent && ent.recipe) renderEntry(ent.recipe);
+      });
+      // Long press = open tag picker
+      var pressTimer = null;
+      card.addEventListener('touchstart', function () {
+        pressTimer = setTimeout(function () {
+          window.hapticTap && window.hapticTap(20);
+          openTagPicker(id);
+        }, 500);
+      }, { passive: true });
+      ['touchend','touchmove','touchcancel'].forEach(function (ev) {
+        card.addEventListener(ev, function () { if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; } });
+      });
+    });
+    container.querySelectorAll('.fav-del').forEach(function (b) {
+      b.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var id = b.getAttribute('data-id');
+        var favs = loadFavorites();
+        var entry = favs.find(function (f) { return f.id === id; });
+        if (!entry) return;
+        removeFavoriteById(id);
+        updateFavButtonInResult();
+        window.showSnackbar && window.showSnackbar('「' + (entry.recipe && entry.recipe.name || 'レシピ') + '」を削除しました', {
+          onAction: function () {
+            var l2 = loadFavorites(); l2.unshift(entry); saveFavorites(l2); window.renderFavorites();
+          }
+        });
+      });
+    });
+    container.querySelectorAll('.fav-tag-btn').forEach(function (b) {
+      b.addEventListener('click', function (e) {
+        e.stopPropagation();
+        openTagPicker(b.getAttribute('data-id'));
+      });
+    });
+  };
+
+  function openTagPicker(favId) {
+    var favs = loadFavorites();
+    var entry = favs.find(function (f) { return f.id === favId; });
+    if (!entry) return;
+    var current = (entry.tags || []).slice();
+    var allTags = allTagsIn(favs).slice();
+    var overlay = document.createElement('div');
+    overlay.className = 'tag-picker-overlay';
+    overlay.innerHTML = ''
+      + '<div class="tag-picker">'
+        + '<h4>🏷 タグを編集: ' + htmlEscape(entry.recipe && entry.recipe.name || '') + '</h4>'
+        + '<div class="tag-list"></div>'
+        + '<input type="text" id="new-tag-input" placeholder="新しいタグを追加（例：週末）">'
+        + '<div class="tag-actions">'
+          + '<button class="tag-cancel" type="button">キャンセル</button>'
+          + '<button class="tag-save" type="button">保存</button>'
+        + '</div>'
+      + '</div>';
+    document.body.appendChild(overlay);
+    function renderTags() {
+      var list = overlay.querySelector('.tag-list');
+      list.innerHTML = allTags.map(function (t) {
+        var active = current.indexOf(t) !== -1;
+        return '<button type="button" data-tag="' + htmlEscape(t) + '" class="' + (active ? 'active' : '') + '">#' + htmlEscape(t) + '</button>';
+      }).join('');
+      list.querySelectorAll('button').forEach(function (b) {
+        b.addEventListener('click', function () {
+          var t = b.getAttribute('data-tag');
+          var i = current.indexOf(t);
+          if (i >= 0) current.splice(i, 1); else current.push(t);
+          b.classList.toggle('active');
+        });
+      });
+    }
+    renderTags();
+    var inp = overlay.querySelector('#new-tag-input');
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        var v = inp.value.trim();
+        if (v && allTags.indexOf(v) === -1) { allTags.push(v); }
+        if (v && current.indexOf(v) === -1) current.push(v);
+        inp.value = '';
+        renderTags();
+      }
+    });
+    overlay.querySelector('.tag-cancel').addEventListener('click', function () { overlay.remove(); });
+    overlay.querySelector('.tag-save').addEventListener('click', function () {
+      // Also include typed but not-Enter'd tag
+      var v = inp.value.trim();
+      if (v && current.indexOf(v) === -1) current.push(v);
+      setTagsForFav(favId, current);
+      overlay.remove();
+      window.renderFavorites();
+    });
+    overlay.addEventListener('click', function (e) { if (e.target === overlay) overlay.remove(); });
+  }
+
+  // Initial re-render
+  try { window.renderShoppingList(); } catch (_) {}
+  try { window.renderFavorites(); } catch (_) {}
 })();
 
 </script>
