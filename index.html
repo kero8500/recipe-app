@@ -1138,6 +1138,162 @@
     box-shadow: none;
   }
   .settings-modal .btn-cancel:active { box-shadow: none; }
+  /* --- Candidates (3 proposals) --- */
+  .candidates-intro {
+    font-size: 14px;
+    color: #6d4c2e;
+    margin: 0 0 10px;
+    padding: 10px 12px;
+    background: #fff3e6;
+    border-left: 4px solid #ff8a3d;
+    border-radius: 8px;
+  }
+  .candidate-card {
+    background: #fffaf3;
+    border: 1.5px solid #ffd4b0;
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 6px rgba(139,69,19,0.06);
+  }
+  .candidate-card .cand-name {
+    font-size: 17px;
+    font-weight: 700;
+    color: #8b4513;
+    margin: 0 0 6px;
+  }
+  .candidate-card .cand-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-size: 12px;
+    color: #7a5230;
+    margin-bottom: 8px;
+  }
+  .candidate-card .cand-meta span {
+    background: #fff;
+    border: 1px solid #ffd4b0;
+    border-radius: 12px;
+    padding: 3px 8px;
+  }
+  .candidate-card .cand-summary {
+    font-size: 13px;
+    color: #555;
+    line-height: 1.5;
+    margin-bottom: 10px;
+  }
+  .candidate-card .cand-choose {
+    width: 100%;
+    background: linear-gradient(135deg, #ffa66b, #ff8a3d);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 3px 8px rgba(255,138,61,0.3);
+  }
+  .candidate-card .cand-choose:active { box-shadow: 0 1px 3px rgba(255,138,61,0.3); }
+  .candidates-cancel {
+    width: 100%;
+    background: transparent;
+    color: #8b4513;
+    border: 1.5px solid #ffd4b0;
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 4px;
+  }
+
+  /* --- Share button & menu --- */
+  .share-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #7cb5ff, #4a90e2);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 11px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 10px;
+    box-shadow: 0 3px 8px rgba(74,144,226,0.25);
+  }
+  .share-btn:active { box-shadow: 0 1px 3px rgba(74,144,226,0.25); }
+  .share-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 9999;
+    animation: fadeIn 0.15s ease-out;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .share-modal {
+    background: #fff;
+    width: 100%;
+    max-width: 520px;
+    border-radius: 16px 16px 0 0;
+    padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+    animation: slideUp 0.2s ease-out;
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .share-modal h3 {
+    margin: 0 0 14px;
+    font-size: 16px;
+    color: #8b4513;
+    text-align: center;
+  }
+  .share-modal .share-opt {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    background: #fff8f0;
+    border: 1.5px solid #ffd4b0;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #8b4513;
+    cursor: pointer;
+    text-align: left;
+  }
+  .share-modal .share-opt:active { background: #fff3e6; }
+  .share-modal .share-opt .icon { font-size: 20px; }
+  .share-modal .share-close {
+    width: 100%;
+    background: transparent;
+    color: #666;
+    border: 1.5px solid #ddd;
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 4px;
+  }
+  .share-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 40px;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.82);
+    color: #fff;
+    font-size: 14px;
+    padding: 10px 16px;
+    border-radius: 22px;
+    z-index: 10000;
+    animation: fadeIn 0.15s ease-out;
+  }
+
   /* Panels */
   .panel { display: none; }
   .panel.active { display: block; }
@@ -1952,6 +2108,151 @@ function parseRecipeJson(text) {
   }
 }
 
+// --- Candidates (3 proposals) prompts & parsers ---
+function buildRecipeCandidatesPrompt() {
+  const data = {
+    食べたいもの: document.getElementById('craving').value.trim(),
+    冷蔵庫の食材: document.getElementById('ingredients').value.trim(),
+    人数: document.getElementById('servings').value.trim(),
+    調理時間: document.getElementById('time').value.trim(),
+    アレルギー制限: document.getElementById('allergy').value.trim(),
+    難易度: getChipValue('difficulty'),
+    気分シーン: getChipValue('mood'),
+  };
+  const filled = Object.entries(data)
+    .filter(([, v]) => v)
+    .map(([k, v]) => `- ${k}: ${v}`)
+    .join('\n');
+
+  return `あなたは料理研究家です。以下の条件から、互いに系統の異なる3つのレシピ候補を提案してください（例：和・洋・中、主菜のバリエーションなど）。
+${filled || '- 特に指定なし。おすすめの家庭料理を3つ提案してください。'}
+
+必ず以下のJSON形式のみで回答してください（前後に説明文を付けない。手順は各3〜5ステップで簡潔に）:
+{
+  "candidates": [
+    {
+      "name": "料理名",
+      "time": "調理時間（例: 30分）",
+      "difficulty": "難易度",
+      "cost": "目安費用（円）",
+      "summary": "この料理の特徴を1〜2文で",
+      "ingredients": [{"name": "食材名", "amount": "分量"}],
+      "steps": ["手順1", "手順2"],
+      "nutrition": {"calories": "kcal", "protein": "g", "carbs": "g", "fat": "g", "salt": "g"},
+      "tips": "料理のポイント"
+    }
+  ]
+}
+candidates 配列には必ず3つのレシピを含めてください。`;
+}
+
+function buildMealCandidatesPrompt() {
+  const data = {
+    食べたいもの: document.getElementById('craving').value.trim(),
+    冷蔵庫の食材: document.getElementById('ingredients').value.trim(),
+    人数: document.getElementById('servings').value.trim(),
+    調理時間: document.getElementById('time').value.trim(),
+    アレルギー制限: document.getElementById('allergy').value.trim(),
+    難易度: getChipValue('difficulty'),
+    気分シーン: getChipValue('mood'),
+  };
+  const filled = Object.entries(data)
+    .filter(([, v]) => v)
+    .map(([k, v]) => `- ${k}: ${v}`)
+    .join('\n');
+
+  return `あなたは料理研究家です。以下の条件から、互いに系統の異なる3つの「1食分の献立」候補を提案してください。各献立は主菜1・副菜1・汁物1の計3品で構成します。
+${filled || '- 特に指定なし。バランスの良い家庭的な献立を3つ提案してください。'}
+
+必ず以下のJSON形式のみで回答してください（前後に説明文を付けない。手順は各品2〜3ステップで極めて簡潔に）:
+{
+  "candidates": [
+    {
+      "type": "meal",
+      "name": "献立名",
+      "totalTime": "全体の所要時間",
+      "difficulty": "難易度",
+      "cost": "目安費用（円）",
+      "summary": "献立のコンセプト・バランスの説明（1〜2文）",
+      "dishes": [
+        {"role": "主菜", "name": "料理名", "time": "調理時間", "ingredients": [{"name": "食材名", "amount": "分量"}], "steps": ["手順1", "手順2"]},
+        {"role": "副菜", "name": "料理名", "time": "調理時間", "ingredients": [{"name": "食材名", "amount": "分量"}], "steps": ["手順1", "手順2"]},
+        {"role": "汁物", "name": "料理名", "time": "調理時間", "ingredients": [{"name": "食材名", "amount": "分量"}], "steps": ["手順1", "手順2"]}
+      ],
+      "nutrition": {"calories": "kcal", "protein": "g", "carbs": "g", "fat": "g", "salt": "g"},
+      "tips": "段取り・アレンジのポイント"
+    }
+  ]
+}
+candidates 配列には必ず3つの献立を含めてください。`;
+}
+
+function parseCandidatesJson(text) {
+  let obj = null;
+  try { obj = JSON.parse(text); } catch {}
+  if (!obj) {
+    const m = text.match(/\{[\s\S]*\}/);
+    if (m) { try { obj = JSON.parse(m[0]); } catch {} }
+  }
+  if (!obj) return null;
+  const list = Array.isArray(obj.candidates) ? obj.candidates
+             : Array.isArray(obj.recipes) ? obj.recipes
+             : Array.isArray(obj) ? obj : null;
+  if (!list || list.length === 0) return null;
+  return list.slice(0, 3);
+}
+
+function renderCandidates(candidates, type) {
+  const resultEl = document.getElementById('result');
+  const title = type === 'meal' ? '🍱 献立の候補が3つあります' : '🍳 レシピの候補が3つあります';
+  const cardsHtml = candidates.map(function (c, idx) {
+    const name = c.name || (type === 'meal' ? '献立' + (idx + 1) : 'レシピ' + (idx + 1));
+    const time = type === 'meal' ? (c.totalTime || c.time || '-') : (c.time || '-');
+    const difficulty = c.difficulty || '-';
+    const cost = c.cost || '-';
+    const summary = c.summary || '';
+    return '<div class="candidate-card" data-idx="' + idx + '">' +
+      '<div class="cand-name">' + (type === 'meal' ? '🍱 ' : '') + escapeHtml(name) + '</div>' +
+      '<div class="cand-meta">' +
+        '<span>⏱ ' + escapeHtml(time) + '</span>' +
+        '<span>📊 ' + escapeHtml(difficulty) + '</span>' +
+        '<span>💰 ' + escapeHtml(cost) + '</span>' +
+      '</div>' +
+      (summary ? '<div class="cand-summary">' + escapeHtml(summary) + '</div>' : '') +
+      '<button class="cand-choose" data-idx="' + idx + '">このレシピで決定</button>' +
+    '</div>';
+  }).join('');
+
+  resultEl.innerHTML =
+    '<div class="card">' +
+      '<div class="candidates-intro">' + escapeHtml(title) + '。お好みの1つを選んで「このレシピで決定」を押してください。</div>' +
+      cardsHtml +
+      '<button class="candidates-cancel" id="candidates-cancel">キャンセル</button>' +
+    '</div>';
+
+  resultEl.querySelectorAll('.cand-choose').forEach(function (b) {
+    b.addEventListener('click', function () {
+      const idx = parseInt(b.dataset.idx, 10);
+      const chosen = candidates[idx];
+      if (!chosen) return;
+      if (type === 'meal') {
+        if (!chosen.type) chosen.type = 'meal';
+        renderMeal(chosen, true);
+      } else {
+        renderRecipe(chosen, true);
+      }
+    });
+  });
+  const cancelBtn = document.getElementById('candidates-cancel');
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', function () {
+      resultEl.innerHTML = '';
+    });
+  }
+
+  resultEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 async function generateRecipe() {
   const resultEl = document.getElementById('result');
   const btn = document.getElementById('generate');
@@ -1971,13 +2272,13 @@ async function generateRecipe() {
   btn.classList.add('cancel-state');
   btn.setAttribute('aria-busy', 'true');
   if (mealBtn) mealBtn.disabled = true;
-  resultEl.innerHTML = '<div class="card"><div class="loading"><div class="spinner"></div><div>レシピを考えています...</div></div></div>';
+  resultEl.innerHTML = '<div class="card"><div class="loading"><div class="spinner"></div><div>3つのレシピ候補を考えています...</div></div></div>';
 
   try {
     const res = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt: buildPrompt() }),
+      body: JSON.stringify({ prompt: buildRecipeCandidatesPrompt() }),
       signal: currentAbortController.signal,
     });
 
@@ -1991,14 +2292,12 @@ async function generateRecipe() {
     const text = json.text;
     if (!text) throw new Error('レスポンスが空でした');
 
-    // #9: Use robust JSON parser
-    const recipe = parseRecipeJson(text);
-    // #6: Show retry button on JSON parse failure
-    if (!recipe) {
-      resultEl.innerHTML = `<div class="card"><div class="error">レシピの生成に失敗しました。もう一度お試しください。<br><button class="retry-btn" onclick="generateRecipe()">再試行</button></div></div>`;
+    const candidates = parseCandidatesJson(text);
+    if (!candidates || candidates.length === 0) {
+      resultEl.innerHTML = `<div class="card"><div class="error">レシピ候補の生成に失敗しました。もう一度お試しください。<br><button class="retry-btn" onclick="generateRecipe()">再試行</button></div></div>`;
       return;
     }
-    renderRecipe(recipe, true);
+    renderCandidates(candidates, 'recipe');
   } catch (e) {
     // #13: Handle abort (cancel)
     if (e.name === 'AbortError') {
@@ -2054,6 +2353,7 @@ function renderRecipe(r, addHistory) {
       <div class="section-title">食材</div>
       <ul class="ing">${ingredients}</ul>
       <button class="${shopBtnClass}" id="shop-toggle">${shopBtnText}</button>
+      <button class="share-btn" id="share-btn">📤 共有する</button>
       <div class="section-title">作り方</div>
       <ol class="steps">${steps}</ol>
       <div style="margin-top:12px;">
@@ -2116,6 +2416,11 @@ function renderRecipe(r, addHistory) {
     shopBtn.className = 'shop-add-btn added';
     shopBtn.textContent = '✅ 買い物リストに追加済み';
   });
+
+  const shareBtnR = document.getElementById('share-btn');
+  if (shareBtnR) {
+    shareBtnR.addEventListener('click', function () { showShareMenu(r, 'recipe'); });
+  }
 
   document.getElementById('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
@@ -2198,13 +2503,13 @@ async function generateMeal() {
   btn.classList.add('cancel-state');
   btn.setAttribute('aria-busy', 'true');
   otherBtn.disabled = true;
-  resultEl.innerHTML = '<div class="card"><div class="loading"><div class="spinner"></div><div>1食分の献立を考えています...</div></div></div>';
+  resultEl.innerHTML = '<div class="card"><div class="loading"><div class="spinner"></div><div>3つの献立候補を考えています...</div></div></div>';
 
   try {
     const res = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt: buildMealPrompt() }),
+      body: JSON.stringify({ prompt: buildMealCandidatesPrompt() }),
       signal: currentAbortController.signal,
     });
 
@@ -2217,13 +2522,15 @@ async function generateMeal() {
     const text = json.text;
     if (!text) throw new Error('レスポンスが空でした');
 
-    const meal = parseMealJson(text);
-    if (!meal || !Array.isArray(meal.dishes) || meal.dishes.length === 0) {
-      resultEl.innerHTML = `<div class="card"><div class="error">献立の生成に失敗しました。もう一度お試しください。<br><button class="retry-btn" onclick="generateMeal()">再試行</button></div></div>`;
+    const candidates = parseCandidatesJson(text);
+    const validCandidates = (candidates || []).filter(function (c) {
+      return c && Array.isArray(c.dishes) && c.dishes.length > 0;
+    });
+    if (validCandidates.length === 0) {
+      resultEl.innerHTML = `<div class="card"><div class="error">献立候補の生成に失敗しました。もう一度お試しください。<br><button class="retry-btn" onclick="generateMeal()">再試行</button></div></div>`;
       return;
     }
-    if (!meal.type) meal.type = 'meal';
-    renderMeal(meal, true);
+    renderCandidates(validCandidates, 'meal');
   } catch (e) {
     if (e.name === 'AbortError') {
       resultEl.innerHTML = '<div class="card"><div class="error">リクエストをキャンセルしました。</div></div>';
@@ -2287,6 +2594,7 @@ function renderMeal(m, addHistory) {
       </div>
       ${m.summary ? `<div class="meal-summary">${escapeHtml(m.summary)}</div>` : ''}
       <button class="${shopBtnClass}" id="shop-toggle">${shopBtnText}</button>
+      <button class="share-btn" id="share-btn-meal">📤 共有する</button>
       <div class="section-title">献立の内容</div>
       ${dishesHtml}
       <div style="margin-top:12px;">
@@ -2330,6 +2638,11 @@ function renderMeal(m, addHistory) {
     shopBtn.className = 'shop-add-btn added';
     shopBtn.textContent = '✅ 買い物リストに追加済み';
   });
+
+  const shareBtnM = document.getElementById('share-btn-meal');
+  if (shareBtnM) {
+    shareBtnM.addEventListener('click', function () { showShareMenu(m, 'meal'); });
+  }
 
   document.getElementById('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
@@ -2588,6 +2901,7 @@ function renderWeekly(w, addHistory) {
       '<button class="' + favBtnClass + '" id="fav-toggle">' + favBtnText + '</button>' +
       (w.summary ? '<div class="weekly-summary">' + escapeHtml(w.summary) + '</div>' : '') +
       '<button class="' + shopBtnClass + '" id="weekly-shop-toggle">' + shopBtnText + '</button>' +
+      '<button class="share-btn" id="share-btn-weekly">📤 共有する</button>' +
       '<div class="section-title">曜日を選択</div>' +
       '<div class="day-tabs" role="tablist">' + tabsHtml + '</div>' +
       panelsHtml +
@@ -2634,11 +2948,183 @@ function renderWeekly(w, addHistory) {
     shopBtn.textContent = '✅ 1週間分の食材を追加済み（' + added + '品追加）';
   });
 
+  const shareBtnW = document.getElementById('share-btn-weekly');
+  if (shareBtnW) {
+    shareBtnW.addEventListener('click', function () { showShareMenu(w, 'weekly'); });
+  }
+
   document.getElementById('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   if (addHistory !== false) {
     addToHistory(w);
   }
+}
+
+
+// --- Share (LINE / Mail / Web Share / Copy) ---
+const APP_SHARE_URL = 'https://kero8500.github.io/recipe-app/';
+
+function buildShareText(data, type) {
+  const lines = [];
+  const sep = '';
+  if (type === 'recipe') {
+    lines.push('🍳 ' + (data.name || 'レシピ'));
+    lines.push('');
+    const meta = [];
+    if (data.time) meta.push('⏱ ' + data.time);
+    if (data.difficulty) meta.push('📊 ' + data.difficulty);
+    if (data.cost) meta.push('💰 ' + data.cost);
+    if (meta.length) lines.push(meta.join(' / '));
+    lines.push('');
+    if (Array.isArray(data.ingredients) && data.ingredients.length) {
+      lines.push('🥬 材料');
+      data.ingredients.forEach(function (i) {
+        if (i && i.name) lines.push('・' + i.name + (i.amount ? ' ' + i.amount : ''));
+      });
+      lines.push('');
+    }
+    if (Array.isArray(data.steps) && data.steps.length) {
+      lines.push('👨‍🍳 作り方');
+      data.steps.forEach(function (st, idx) { lines.push((idx + 1) + '. ' + st); });
+      lines.push('');
+    }
+  } else if (type === 'meal') {
+    lines.push('🍱 ' + (data.name || '1食分の献立'));
+    lines.push('');
+    const meta = [];
+    if (data.totalTime) meta.push('⏱ ' + data.totalTime);
+    if (data.difficulty) meta.push('📊 ' + data.difficulty);
+    if (data.cost) meta.push('💰 ' + data.cost);
+    if (meta.length) lines.push(meta.join(' / '));
+    if (data.summary) { lines.push(''); lines.push(data.summary); }
+    lines.push('');
+    (data.dishes || []).forEach(function (d) {
+      lines.push('――――――――');
+      lines.push('【' + (d.role || '一品') + '】' + (d.name || ''));
+      if (d.time) lines.push('⏱ ' + d.time);
+      if (Array.isArray(d.ingredients) && d.ingredients.length) {
+        lines.push('🥬 材料');
+        d.ingredients.forEach(function (i) {
+          if (i && i.name) lines.push('・' + i.name + (i.amount ? ' ' + i.amount : ''));
+        });
+      }
+      if (Array.isArray(d.steps) && d.steps.length) {
+        lines.push('👨‍🍳 作り方');
+        d.steps.forEach(function (st, idx) { lines.push((idx + 1) + '. ' + st); });
+      }
+      lines.push('');
+    });
+  } else if (type === 'weekly') {
+    lines.push('📅 ' + (data.name || '1週間分の献立'));
+    if (data.summary) { lines.push(''); lines.push(data.summary); }
+    lines.push('');
+    (data.days || []).forEach(function (d) {
+      lines.push('========================');
+      lines.push('Day ' + (d.day || '') + '：' + (d.title || '献立'));
+      if (d.totalTime) lines.push('⏱ ' + d.totalTime);
+      (d.dishes || []).forEach(function (dish) {
+        lines.push('――――――――');
+        lines.push('【' + (dish.role || '一品') + '】' + (dish.name || ''));
+        if (dish.time) lines.push('⏱ ' + dish.time);
+        if (Array.isArray(dish.ingredients) && dish.ingredients.length) {
+          lines.push('🥬 材料');
+          dish.ingredients.forEach(function (i) {
+            if (i && i.name) lines.push('・' + i.name + (i.amount ? ' ' + i.amount : ''));
+          });
+        }
+        if (Array.isArray(dish.steps) && dish.steps.length) {
+          lines.push('👨‍🍳 作り方');
+          dish.steps.forEach(function (st, idx) { lines.push((idx + 1) + '. ' + st); });
+        }
+      });
+      lines.push('');
+    });
+  }
+  lines.push('レシピアプリ: ' + APP_SHARE_URL);
+  return lines.join('\n');
+}
+
+function getShareTitle(data, type) {
+  if (type === 'meal') return '🍱 ' + (data.name || '1食分の献立');
+  if (type === 'weekly') return '📅 ' + (data.name || '1週間分の献立');
+  return '🍳 ' + (data.name || 'レシピ');
+}
+
+function showShareToast(msg) {
+  const t = document.createElement('div');
+  t.className = 'share-toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 1800);
+}
+
+function showShareMenu(data, type) {
+  const text = buildShareText(data, type);
+  const title = getShareTitle(data, type);
+  const encoded = encodeURIComponent(text);
+  const hasWebShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
+
+  const backdrop = document.createElement('div');
+  backdrop.className = 'share-modal-backdrop';
+  const webShareHtml = hasWebShare
+    ? '<button class="share-opt" data-act="webshare"><span class="icon">📲</span><span>その他のアプリで共有</span></button>'
+    : '';
+  backdrop.innerHTML =
+    '<div class="share-modal" role="dialog" aria-label="共有">' +
+      '<h3>📤 共有する</h3>' +
+      '<button class="share-opt" data-act="line"><span class="icon">💬</span><span>LINE で送る</span></button>' +
+      '<button class="share-opt" data-act="mail"><span class="icon">✉️</span><span>メールで送る</span></button>' +
+      webShareHtml +
+      '<button class="share-opt" data-act="copy"><span class="icon">📋</span><span>テキストをコピー</span></button>' +
+      '<button class="share-close" data-act="close">キャンセル</button>' +
+    '</div>';
+  document.body.appendChild(backdrop);
+
+  function close() {
+    if (backdrop.parentNode) backdrop.parentNode.removeChild(backdrop);
+  }
+  backdrop.addEventListener('click', function (e) {
+    if (e.target === backdrop) close();
+  });
+  backdrop.querySelectorAll('.share-opt, .share-close').forEach(function (b) {
+    b.addEventListener('click', async function () {
+      const act = b.dataset.act;
+      if (act === 'line') {
+        window.open('https://line.me/R/msg/text/?' + encoded, '_blank');
+        close();
+      } else if (act === 'mail') {
+        const subject = encodeURIComponent(title);
+        window.location.href = 'mailto:?subject=' + subject + '&body=' + encoded;
+        close();
+      } else if (act === 'webshare') {
+        try {
+          await navigator.share({ title: title, text: text, url: APP_SHARE_URL });
+        } catch (e) { /* user cancel or error: ignore */ }
+        close();
+      } else if (act === 'copy') {
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(text);
+          } else {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+          }
+          showShareToast('コピーしました');
+        } catch (e) {
+          showShareToast('コピーに失敗しました');
+        }
+        close();
+      } else {
+        close();
+      }
+    });
+  });
 }
 
 document.getElementById('generate-weekly').addEventListener('click', generateWeekly);
