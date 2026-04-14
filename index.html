@@ -2341,6 +2341,7 @@ function renderRecipe(r, addHistory) {
     <div class="card recipe">
       <h2>${escapeHtml(r.name || '')}${faved ? ' ⭐' : ''}</h2>
       <button class="${favBtnClass}" id="fav-toggle">${favBtnText}</button>
+      <button class="share-btn" id="share-btn">📤 共有する</button>
       <div class="meta">
         <span>⏱ ${escapeHtml(r.time || '-')}</span>
         <span>📊 ${escapeHtml(r.difficulty || '-')}</span>
@@ -2353,7 +2354,6 @@ function renderRecipe(r, addHistory) {
       <div class="section-title">食材</div>
       <ul class="ing">${ingredients}</ul>
       <button class="${shopBtnClass}" id="shop-toggle">${shopBtnText}</button>
-      <button class="share-btn" id="share-btn">📤 共有する</button>
       <div class="section-title">作り方</div>
       <ol class="steps">${steps}</ol>
       <div style="margin-top:12px;">
@@ -2587,6 +2587,7 @@ function renderMeal(m, addHistory) {
     <div class="card recipe meal-header">
       <h2>🍱 ${escapeHtml(m.name || '1食分の献立')}${faved ? ' ⭐' : ''}</h2>
       <button class="${favBtnClass}" id="fav-toggle">${favBtnText}</button>
+      <button class="share-btn" id="share-btn-meal">📤 共有する</button>
       <div class="meta">
         <span>⏱ 合計 ${escapeHtml(m.totalTime || '-')}</span>
         <span>📊 ${escapeHtml(m.difficulty || '-')}</span>
@@ -2594,7 +2595,6 @@ function renderMeal(m, addHistory) {
       </div>
       ${m.summary ? `<div class="meal-summary">${escapeHtml(m.summary)}</div>` : ''}
       <button class="${shopBtnClass}" id="shop-toggle">${shopBtnText}</button>
-      <button class="share-btn" id="share-btn-meal">📤 共有する</button>
       <div class="section-title">献立の内容</div>
       ${dishesHtml}
       <div style="margin-top:12px;">
@@ -2899,9 +2899,9 @@ function renderWeekly(w, addHistory) {
     '<div class="card recipe weekly-header">' +
       '<h2>📅 ' + escapeHtml(w.name || '1週間分の献立') + (faved ? ' ⭐' : '') + '</h2>' +
       '<button class="' + favBtnClass + '" id="fav-toggle">' + favBtnText + '</button>' +
+      '<button class="share-btn" id="share-btn-weekly">📤 共有する</button>' +
       (w.summary ? '<div class="weekly-summary">' + escapeHtml(w.summary) + '</div>' : '') +
       '<button class="' + shopBtnClass + '" id="weekly-shop-toggle">' + shopBtnText + '</button>' +
-      '<button class="share-btn" id="share-btn-weekly">📤 共有する</button>' +
       '<div class="section-title">曜日を選択</div>' +
       '<div class="day-tabs" role="tablist">' + tabsHtml + '</div>' +
       panelsHtml +
@@ -3691,100 +3691,12 @@ async function adjustCurrentRecipe() {
   }
 }
 
-// --- Streaming (single recipe only: hook into generateRecipe) ---
-// We monkey-patch generateRecipe to try streaming first, fallback to existing on failure.
-(function () {
-  if (typeof generateRecipe !== 'function') return;
-  var original = generateRecipe;
-  window.generateRecipe = async function () {
-    var resultEl = document.getElementById('result');
-    var btn = document.getElementById('generate');
-    if (currentAbortController) { currentAbortController.abort(); return; }
-    currentAbortController = new AbortController();
-    var mealBtn = document.getElementById('generate-meal');
-    var weeklyBtn = document.getElementById('generate-weekly');
-    btn.disabled = false;
-    btn.textContent = 'キャンセル';
-    btn.classList.add('cancel-state');
-    btn.setAttribute('aria-busy', 'true');
-    if (mealBtn) mealBtn.disabled = true;
-    if (weeklyBtn) weeklyBtn.disabled = true;
-    resultEl.innerHTML = '<div class="card"><div class="loading"><div class="spinner"></div><div>レシピを考えています...</div><div class="stream-preview" id="stream-preview" style="display:none;"></div></div></div>';
-
-    try {
-      var res = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
-        body: JSON.stringify({ prompt: buildPrompt(), stream: true }),
-        signal: currentAbortController.signal,
-      });
-      if (!res.ok) {
-        var errData = await res.json().catch(function () { return null; });
-        throw new Error((errData && errData.error) || ('API エラー (' + res.status + ')'));
-      }
-      var ct = res.headers.get('content-type') || '';
-      var fullText = '';
-      if (ct.indexOf('text/event-stream') >= 0 && res.body) {
-        var reader = res.body.getReader();
-        var decoder = new TextDecoder();
-        var buffer = '';
-        var preview = document.getElementById('stream-preview');
-        if (preview) preview.style.display = 'block';
-        while (true) {
-          var chunk = await reader.read();
-          if (chunk.done) break;
-          buffer += decoder.decode(chunk.value, { stream: true });
-          var lines = buffer.split('\n');
-          buffer = lines.pop();
-          for (var i = 0; i < lines.length; i++) {
-            var line = lines[i].trim();
-            if (!line.startsWith('data:')) continue;
-            var data = line.slice(5).trim();
-            if (data === '[DONE]') continue;
-            try {
-              var j = JSON.parse(data);
-              var delta = j.choices && j.choices[0] && j.choices[0].delta && j.choices[0].delta.content;
-              if (delta) {
-                fullText += delta;
-                if (preview) {
-                  preview.textContent = fullText.slice(-500);
-                  preview.scrollTop = preview.scrollHeight;
-                }
-              }
-            } catch { /* non-JSON data line */ }
-          }
-        }
-      } else {
-        // Fallback: plain JSON response
-        var json = await res.json();
-        fullText = json.text || '';
-      }
-      if (!fullText) throw new Error('レスポンスが空でした');
-      var recipe = parseRecipeJson(fullText);
-      if (!recipe) {
-        resultEl.innerHTML = '<div class="card"><div class="error">レシピの生成に失敗しました。もう一度お試しください。<br><button class="retry-btn" onclick="generateRecipe()">再試行</button></div></div>';
-        return;
-      }
-      renderRecipe(recipe, true);
-    } catch (e) {
-      if (e.name === 'AbortError') {
-        resultEl.innerHTML = '<div class="card"><div class="error">リクエストをキャンセルしました。</div></div>';
-      } else {
-        resultEl.innerHTML = '<div class="card"><div class="error">' + escapeHtml(e.message) + '<br><button class="retry-btn" onclick="generateRecipe()">再試行</button></div></div>';
-      }
-    } finally {
-      currentAbortController = null;
-      btn.classList.remove('cancel-state');
-      btn.disabled = false;
-      btn.setAttribute('aria-busy', 'false');
-      var mb = document.getElementById('generate-meal');
-      if (mb) mb.disabled = false;
-      var wb = document.getElementById('generate-weekly');
-      if (wb) wb.disabled = false;
-      updateButtonText();
-    }
-  };
-})();
+// --- Streaming disabled ---
+// Previously this block monkey-patched generateRecipe to stream a SINGLE recipe,
+// which bypassed the 3-candidate selection flow (buildRecipeCandidatesPrompt +
+// renderCandidates). Disabled to restore the 3-candidate behavior for
+// single-dish recipes. If streaming is reintroduced, it must call the candidates
+// prompt/parser and render via renderCandidates, not renderRecipe directly.
 
 // Rebind generate button click to use streaming wrapper
 (function () {
