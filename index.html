@@ -1210,19 +1210,21 @@
 
   /* --- Share button & menu --- */
   .share-btn {
-    width: 100%;
-    background: linear-gradient(135deg, #7cb5ff, #4a90e2);
+    display: inline-block;
+    width: auto;
+    margin-top: 8px;
+    margin-left: 6px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 600;
     color: #fff;
+    background: linear-gradient(135deg, #ffa94d, #e8590c);
     border: none;
-    border-radius: 10px;
-    padding: 11px;
-    font-size: 14px;
-    font-weight: 700;
+    border-radius: 20px;
     cursor: pointer;
-    margin-top: 10px;
-    box-shadow: 0 3px 8px rgba(74,144,226,0.25);
+    box-shadow: 0 2px 8px rgba(232, 89, 12, 0.3);
   }
-  .share-btn:active { box-shadow: 0 1px 3px rgba(74,144,226,0.25); }
+  .share-btn:active { opacity: 0.85; box-shadow: 0 1px 3px rgba(232, 89, 12, 0.25); }
   .share-modal-backdrop {
     position: fixed;
     inset: 0;
@@ -3414,12 +3416,6 @@ function openCookingMode(recipe) {
   var idx = 0;
   var overlay = document.createElement('div');
   overlay.className = 'cooking-overlay';
-  // Pull AI-generated image URL from the current recipe card if available
-  var aiImgEl = document.querySelector('#recipe-image-box img');
-  var aiImgSrc = aiImgEl && aiImgEl.src ? aiImgEl.src : '';
-  var imageBlockHtml = aiImgSrc
-    ? '<div class="cooking-image"><img src="' + escapeHtml(aiImgSrc) + '" alt="' + escapeHtml(recipe.name || '') + '"></div>'
-    : '';
   overlay.innerHTML =
     '<div class="cooking-header">' +
       '<div class="cooking-title">' + escapeHtml(recipe.name || '調理モード') + '</div>' +
@@ -3434,7 +3430,6 @@ function openCookingMode(recipe) {
         '</div>' +
       '</div>' +
       '<div class="cooking-info">' +
-        imageBlockHtml +
         '<div class="cooking-ing-panel">' +
           '<div class="cooking-ing-title">🥬 材料・分量</div>' +
           '<div class="cooking-ing-list">' + buildCookingIngredientsHtml(recipe) + '</div>' +
