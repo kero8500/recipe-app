@@ -520,6 +520,70 @@
     background: #ffd0d0;
   }
 
+  /* Meal (1食分献立) styles */
+  .btn-meal {
+    background: linear-gradient(135deg, #66bb6a, #2e7d32);
+    box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+    margin-top: 10px;
+  }
+  .btn-meal:active {
+    box-shadow: 0 2px 6px rgba(46, 125, 50, 0.3);
+  }
+  .meal-header h2 {
+    margin: 0 0 8px;
+    color: #2e7d32;
+    font-size: 22px;
+  }
+  .meal-summary {
+    background: #e8f5e9;
+    border-left: 4px solid #2e7d32;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #1b5e20;
+    margin-bottom: 14px;
+  }
+  .dish-block {
+    background: #fafafa;
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 12px;
+    border: 1px solid #e0e0e0;
+  }
+  .dish-block:last-child { margin-bottom: 0; }
+  .dish-role {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: #fff;
+  }
+  .dish-role.main { background: #e8590c; }
+  .dish-role.side { background: #2e7d32; }
+  .dish-role.soup { background: #1976d2; }
+  .dish-role.other { background: #757575; }
+  .dish-name {
+    font-size: 17px;
+    font-weight: 700;
+    color: #333;
+    margin: 2px 0 6px;
+  }
+  .dish-meta {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 8px;
+  }
+  .dish-sub-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #555;
+    margin: 10px 0 4px;
+  }
+  .dish-block ul.ing li { font-size: 13px; padding: 5px 0; }
+  .dish-block ol.steps li { font-size: 13px; margin-bottom: 6px; }
+
   /* #14: Small smartphone (max-width: 480px) */
   @media (max-width: 480px) {
     header h1 { font-size: 22px; }
@@ -607,6 +671,7 @@
       </div>
     </div>
     <button id="generate" aria-busy="false">おまかせでレシピを提案してもらう</button>
+    <button id="generate-meal" class="btn-meal" aria-busy="false">🍱 1食分の献立を提案してもらう</button>
   </div>
 
   <!-- #15: aria-live for screen reader updates -->
@@ -736,7 +801,7 @@ function renderHistory() {
       const idx = parseInt(item.dataset.idx, 10);
       const entry = loadHistory()[idx];
       if (entry && entry.recipe) {
-        renderRecipe(entry.recipe, false);
+        renderEntry(entry.recipe);
       }
     });
   });
@@ -862,7 +927,7 @@ function renderFavorites() {
       const favorites = loadFavorites();
       const entry = favorites.find(f => f.id === id);
       if (entry && entry.recipe) {
-        renderRecipe(entry.recipe, false);
+        renderEntry(entry.recipe);
       }
     });
   });
@@ -1184,10 +1249,12 @@ async function generateRecipe() {
   // #13: Create AbortController for this request
   currentAbortController = new AbortController();
 
+  const mealBtn = document.getElementById('generate-meal');
   btn.disabled = false;
   btn.textContent = 'キャンセル';
   btn.classList.add('cancel-state');
   btn.setAttribute('aria-busy', 'true');
+  if (mealBtn) mealBtn.disabled = true;
   resultEl.innerHTML = '<div class="card"><div class="loading"><div class="spinner"></div><div>レシピを考えています...</div></div></div>';
 
   try {
@@ -1229,6 +1296,8 @@ async function generateRecipe() {
     btn.classList.remove('cancel-state');
     btn.disabled = false;
     btn.setAttribute('aria-busy', 'false');
+    const mb = document.getElementById('generate-meal');
+    if (mb) mb.disabled = false;
     updateButtonText();
   }
 }
@@ -1318,6 +1387,225 @@ function renderRecipe(r, addHistory) {
     addToHistory(r);
   }
 }
+
+// --- Meal (1食分献立) feature ---
+function buildMealPrompt() {
+  const data = {
+    食べたいもの: document.getElementById('craving').value.trim(),
+    冷蔵庫の食材: document.getElementById('ingredients').value.trim(),
+    人数: document.getElementById('servings').value.trim(),
+    調理時間: document.getElementById('time').value.trim(),
+    アレルギー制限: document.getElementById('allergy').value.trim(),
+    難易度: getChipValue('difficulty'),
+    気分シーン: getChipValue('mood'),
+  };
+  const filled = Object.entries(data)
+    .filter(([, v]) => v)
+    .map(([k, v]) => `- ${k}: ${v}`)
+    .join('\n');
+
+  return `あなたは料理研究家です。以下の条件から「1食分の献立」を提案してください。献立は主菜1品・副菜1品・汁物1品の計3品で構成してください。栄養バランスと調理の段取りを考慮し、同時に作りやすい組み合わせにしてください。
+${filled || '- 特に指定なし。バランスの良い家庭的な献立を提案してください。'}
+
+必ず以下のJSON形式のみで回答してください（前後に説明文を付けない。手順は各品3〜5ステップで簡潔に）:
+{
+  "type": "meal",
+  "name": "献立名（例: 鶏の照り焼き定食）",
+  "totalTime": "全体の所要時間（例: 40分）",
+  "difficulty": "難易度",
+  "cost": "目安費用（円）",
+  "summary": "献立のコンセプト・バランスの説明（1〜2文）",
+  "dishes": [
+    {"role": "主菜", "name": "料理名", "time": "調理時間", "ingredients": [{"name": "食材名", "amount": "分量"}], "steps": ["手順1", "手順2"]},
+    {"role": "副菜", "name": "料理名", "time": "調理時間", "ingredients": [{"name": "食材名", "amount": "分量"}], "steps": ["手順1", "手順2"]},
+    {"role": "汁物", "name": "料理名", "time": "調理時間", "ingredients": [{"name": "食材名", "amount": "分量"}], "steps": ["手順1", "手順2"]}
+  ],
+  "nutrition": {"calories": "kcal", "protein": "g", "carbs": "g", "fat": "g", "salt": "g"},
+  "tips": "段取り・アレンジのポイント"
+}`;
+}
+
+function parseMealJson(text) {
+  try { return JSON.parse(text); } catch {}
+  const m = text.match(/\{[\s\S]*\}/);
+  if (!m) return null;
+  try { return JSON.parse(m[0]); } catch { return null; }
+}
+
+function getMealIngredients(meal) {
+  const out = [];
+  (meal.dishes || []).forEach(d => {
+    (d.ingredients || []).forEach(i => {
+      if (i && i.name) out.push({ name: i.name, amount: i.amount || '' });
+    });
+  });
+  return out;
+}
+
+function isMeal(r) {
+  return r && (r.type === 'meal' || Array.isArray(r.dishes));
+}
+
+async function generateMeal() {
+  const resultEl = document.getElementById('result');
+  const btn = document.getElementById('generate-meal');
+  const otherBtn = document.getElementById('generate');
+
+  if (currentAbortController) {
+    currentAbortController.abort();
+    return;
+  }
+  currentAbortController = new AbortController();
+
+  btn.textContent = 'キャンセル';
+  btn.classList.add('cancel-state');
+  btn.setAttribute('aria-busy', 'true');
+  otherBtn.disabled = true;
+  resultEl.innerHTML = '<div class="card"><div class="loading"><div class="spinner"></div><div>1食分の献立を考えています...</div></div></div>';
+
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: buildMealPrompt() }),
+      signal: currentAbortController.signal,
+    });
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => null);
+      const errMsg = errData?.error || `API エラー (${res.status})`;
+      throw new Error(errMsg);
+    }
+    const json = await res.json();
+    const text = json.text;
+    if (!text) throw new Error('レスポンスが空でした');
+
+    const meal = parseMealJson(text);
+    if (!meal || !Array.isArray(meal.dishes) || meal.dishes.length === 0) {
+      resultEl.innerHTML = `<div class="card"><div class="error">献立の生成に失敗しました。もう一度お試しください。<br><button class="retry-btn" onclick="generateMeal()">再試行</button></div></div>`;
+      return;
+    }
+    if (!meal.type) meal.type = 'meal';
+    renderMeal(meal, true);
+  } catch (e) {
+    if (e.name === 'AbortError') {
+      resultEl.innerHTML = '<div class="card"><div class="error">リクエストをキャンセルしました。</div></div>';
+    } else {
+      resultEl.innerHTML = `<div class="card"><div class="error">${escapeHtml(e.message)}<br><button class="retry-btn" onclick="generateMeal()">再試行</button></div></div>`;
+    }
+  } finally {
+    currentAbortController = null;
+    btn.classList.remove('cancel-state');
+    btn.textContent = '🍱 1食分の献立を提案してもらう';
+    btn.setAttribute('aria-busy', 'false');
+    otherBtn.disabled = false;
+    updateButtonText();
+  }
+}
+
+function roleClass(role) {
+  if (role && role.includes('主')) return 'main';
+  if (role && role.includes('副')) return 'side';
+  if (role && (role.includes('汁') || role.includes('スープ') || role.includes('味噌'))) return 'soup';
+  return 'other';
+}
+
+function renderMeal(m, addHistory) {
+  const faved = isFavorite(m);
+  const favBtnClass = faved ? 'fav-btn faved' : 'fav-btn not-faved';
+  const favBtnText = faved ? '❤️ お気に入り済み' : '🤍 お気に入りに追加';
+
+  const mealForShop = { name: m.name, ingredients: getMealIngredients(m) };
+  const shopAdded = isRecipeInShoppingList(mealForShop);
+  const shopBtnClass = shopAdded ? 'shop-add-btn added' : 'shop-add-btn not-added';
+  const shopBtnText = shopAdded ? '✅ 買い物リストに追加済み' : '🛒 食材をまとめて買い物リストへ';
+
+  const n = m.nutrition || {};
+  const dishesHtml = (m.dishes || []).map(d => {
+    const rc = roleClass(d.role);
+    const ing = (d.ingredients || []).map(i =>
+      `<li><span>${escapeHtml(i.name)}</span><span>${escapeHtml(i.amount || '')}</span></li>`
+    ).join('');
+    const steps = (d.steps || []).map(s => `<li>${escapeHtml(s)}</li>`).join('');
+    return `<div class="dish-block">
+      <span class="dish-role ${rc}">${escapeHtml(d.role || '一品')}</span>
+      <div class="dish-name">${escapeHtml(d.name || '')}</div>
+      <div class="dish-meta">⏱ ${escapeHtml(d.time || '-')}</div>
+      <div class="dish-sub-title">食材</div>
+      <ul class="ing">${ing}</ul>
+      <div class="dish-sub-title">作り方</div>
+      <ol class="steps">${steps}</ol>
+    </div>`;
+  }).join('');
+
+  document.getElementById('result').innerHTML = `
+    <div class="card recipe meal-header">
+      <h2>🍱 ${escapeHtml(m.name || '1食分の献立')}${faved ? ' ⭐' : ''}</h2>
+      <button class="${favBtnClass}" id="fav-toggle">${favBtnText}</button>
+      <div class="meta">
+        <span>⏱ 合計 ${escapeHtml(m.totalTime || '-')}</span>
+        <span>📊 ${escapeHtml(m.difficulty || '-')}</span>
+        <span>💰 ${escapeHtml(m.cost || '-')}</span>
+      </div>
+      ${m.summary ? `<div class="meal-summary">${escapeHtml(m.summary)}</div>` : ''}
+      <button class="${shopBtnClass}" id="shop-toggle">${shopBtnText}</button>
+      <div class="section-title">献立の内容</div>
+      ${dishesHtml}
+      <div class="section-title">1食あたりの栄養素（目安）</div>
+      <div class="nutri">
+        <div><div class="label">カロリー</div><div class="val">${escapeHtml(n.calories || '-')}</div></div>
+        <div><div class="label">たんぱく質</div><div class="val">${escapeHtml(n.protein || '-')}</div></div>
+        <div><div class="label">炭水化物</div><div class="val">${escapeHtml(n.carbs || '-')}</div></div>
+        <div><div class="label">脂質</div><div class="val">${escapeHtml(n.fat || '-')}</div></div>
+        <div><div class="label">塩分</div><div class="val">${escapeHtml(n.salt || '-')}</div></div>
+      </div>
+      <div class="section-title">段取り・ポイント</div>
+      <div class="tip">${escapeHtml(m.tips || '')}</div>
+    </div>
+  `;
+
+  const favBtn = document.getElementById('fav-toggle');
+  favBtn._recipe = m;
+  favBtn.addEventListener('click', () => {
+    if (isFavorite(m)) {
+      removeFavorite(m);
+    } else {
+      addFavorite(m);
+    }
+    const newFaved = isFavorite(m);
+    favBtn.className = 'fav-btn ' + (newFaved ? 'faved' : 'not-faved');
+    favBtn.textContent = newFaved ? '❤️ お気に入り済み' : '🤍 お気に入りに追加';
+    const h2 = document.querySelector('#result .recipe h2');
+    if (h2) {
+      h2.innerHTML = '🍱 ' + escapeHtml(m.name || '1食分の献立') + (newFaved ? ' ⭐' : '');
+    }
+  });
+
+  const shopBtn = document.getElementById('shop-toggle');
+  shopBtn._recipe = mealForShop;
+  shopBtn.addEventListener('click', () => {
+    if (isRecipeInShoppingList(mealForShop)) return;
+    addIngredientsToShoppingList(mealForShop);
+    shopBtn.className = 'shop-add-btn added';
+    shopBtn.textContent = '✅ 買い物リストに追加済み';
+  });
+
+  document.getElementById('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  if (addHistory !== false) {
+    addToHistory(m);
+  }
+}
+
+function renderEntry(r) {
+  if (isMeal(r)) {
+    renderMeal(r, false);
+  } else {
+    renderRecipe(r, false);
+  }
+}
+
+document.getElementById('generate-meal').addEventListener('click', generateMeal);
 
 document.getElementById('generate').addEventListener('click', generateRecipe);
 
