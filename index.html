@@ -584,6 +584,80 @@
   .dish-block ul.ing li { font-size: 13px; padding: 5px 0; }
   .dish-block ol.steps li { font-size: 13px; margin-bottom: 6px; }
 
+  /* Weekly (1週間分献立) styles */
+  .btn-weekly {
+    background: linear-gradient(135deg, #9575cd, #5e35b1);
+    box-shadow: 0 4px 12px rgba(94, 53, 177, 0.3);
+    margin-top: 10px;
+  }
+  .btn-weekly:active {
+    box-shadow: 0 2px 6px rgba(94, 53, 177, 0.3);
+  }
+  .weekly-header h2 {
+    margin: 0 0 8px;
+    color: #5e35b1;
+    font-size: 22px;
+  }
+  .weekly-summary {
+    background: #ede7f6;
+    border-left: 4px solid #5e35b1;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #311b92;
+    margin-bottom: 14px;
+  }
+  .day-tabs {
+    display: flex;
+    overflow-x: auto;
+    gap: 6px;
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .day-tab {
+    flex: 0 0 auto;
+    padding: 8px 14px;
+    border-radius: 18px;
+    background: #f3e5f5;
+    color: #5e35b1;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    white-space: nowrap;
+    user-select: none;
+  }
+  .day-tab:active { background: #e1bee7; }
+  .day-tab.active {
+    background: #5e35b1;
+    color: #fff;
+    border-color: #5e35b1;
+  }
+  .day-panel { display: none; }
+  .day-panel.active { display: block; }
+  .day-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #5e35b1;
+    margin: 4px 0 10px;
+  }
+  .day-total {
+    font-size: 12px;
+    color: #666;
+    font-weight: 500;
+    margin-left: 8px;
+  }
+  .weekly-shop-btn {
+    margin-top: 12px;
+    background: linear-gradient(135deg, #ffb74d, #f57c00);
+    box-shadow: 0 4px 12px rgba(245, 124, 0, 0.3);
+  }
+  .weekly-shop-btn.added {
+    background: linear-gradient(135deg, #a5d6a7, #4caf50);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+  }
+
   /* #14: Small smartphone (max-width: 480px) */
   @media (max-width: 480px) {
     header h1 { font-size: 22px; }
@@ -672,6 +746,7 @@
     </div>
     <button id="generate" aria-busy="false">おまかせでレシピを提案してもらう</button>
     <button id="generate-meal" class="btn-meal" aria-busy="false">🍱 1食分の献立を提案してもらう</button>
+    <button id="generate-weekly" class="btn-weekly" aria-busy="false">📅 1週間分の献立を提案してもらう</button>
   </div>
 
   <!-- #15: aria-live for screen reader updates -->
@@ -1048,9 +1123,15 @@ function clearShoppingList() {
 function updateShopButtonInResult() {
   const shopBtn = document.querySelector('#result .shop-add-btn');
   if (!shopBtn || !shopBtn._recipe) return;
+  const isWeeklyBtn = shopBtn.classList.contains('weekly-shop-btn');
   const added = isRecipeInShoppingList(shopBtn._recipe);
-  shopBtn.className = 'shop-add-btn ' + (added ? 'added' : 'not-added');
-  shopBtn.textContent = added ? '✅ 買い物リストに追加済み' : '🛒 買い物リストに追加';
+  if (isWeeklyBtn) {
+    shopBtn.className = 'shop-add-btn weekly-shop-btn ' + (added ? 'added' : 'not-added');
+    shopBtn.textContent = added ? '✅ 1週間分の食材を追加済み' : '🛒 1週間分の食材を買い物リストへ';
+  } else {
+    shopBtn.className = 'shop-add-btn ' + (added ? 'added' : 'not-added');
+    shopBtn.textContent = added ? '✅ 買い物リストに追加済み' : '🛒 買い物リストに追加';
+  }
 }
 
 function renderShoppingList() {
@@ -1598,12 +1679,309 @@ function renderMeal(m, addHistory) {
 }
 
 function renderEntry(r) {
-  if (isMeal(r)) {
+  if (isWeekly(r)) {
+    renderWeekly(r, false);
+  } else if (isMeal(r)) {
     renderMeal(r, false);
   } else {
     renderRecipe(r, false);
   }
 }
+
+// --- Weekly (1週間分献立) feature ---
+const WEEKLY_DAYS_TOTAL = 7;
+// Split into 3 requests: days [1,2,3], [4,5], [6,7] to stay within MAX_TOKENS budget
+const WEEKLY_BATCHES = [[1, 2, 3], [4, 5], [6, 7]];
+
+function buildWeeklyPrompt(dayNumbers, sharedContext) {
+  const data = sharedContext;
+  const filled = Object.entries(data)
+    .filter(function (kv) { return kv[1]; })
+    .map(function (kv) { return '- ' + kv[0] + ': ' + kv[1]; })
+    .join('\n');
+
+  const dayList = dayNumbers.join(', ');
+  return 'あなたは料理研究家です。1週間分の夕食献立のうち、Day ' + dayList + ' の献立を提案してください。' +
+    '各日は主菜1・副菜1・汁物1の計3品で構成します。食材の使い回しを意識し、栄養バランスを考慮してください。\n' +
+    '【共通条件】\n' +
+    (filled || '- 特に指定なし。家庭的でバランスの良い献立にしてください。') +
+    '\n\n必ず以下のJSON形式のみで回答してください（前後に説明文を付けない。手順は各品2〜3ステップで極めて簡潔に）:\n' +
+    '{\n' +
+    '  "days": [\n' +
+    '    {\n' +
+    '      "day": ' + dayNumbers[0] + ',\n' +
+    '      "title": "その日の献立の短いタイトル",\n' +
+    '      "totalTime": "全体の所要時間",\n' +
+    '      "dishes": [\n' +
+    '        {"role": "主菜", "name": "料理名", "time": "調理時間", "ingredients": [{"name": "食材名", "amount": "分量"}], "steps": ["手順1", "手順2"]},\n' +
+    '        {"role": "副菜", "name": "料理名", "time": "調理時間", "ingredients": [{"name": "食材名", "amount": "分量"}], "steps": ["手順1", "手順2"]},\n' +
+    '        {"role": "汁物", "name": "料理名", "time": "調理時間", "ingredients": [{"name": "食材名", "amount": "分量"}], "steps": ["手順1", "手順2"]}\n' +
+    '      ]\n' +
+    '    }\n' +
+    '  ]\n' +
+    '}\n' +
+    'days 配列には Day ' + dayList + ' の合計 ' + dayNumbers.length + ' 日分を必ず含めてください。day フィールドの番号は指定されたものを使ってください。';
+}
+
+function parseWeeklyJson(text) {
+  try { return JSON.parse(text); } catch (e) {}
+  var m = text.match(/\{[\s\S]*\}/);
+  if (!m) return null;
+  try { return JSON.parse(m[0]); } catch (e) { return null; }
+}
+
+function isWeekly(r) {
+  return r && (r.type === 'weekly' || Array.isArray(r.days));
+}
+
+function getWeeklyAggregatedIngredients(weekly) {
+  // Aggregate by ingredient name across all days; concatenate amounts with "+"
+  var map = new Map();
+  (weekly.days || []).forEach(function (day) {
+    (day.dishes || []).forEach(function (dish) {
+      (dish.ingredients || []).forEach(function (ing) {
+        if (!ing || !ing.name) return;
+        var key = (ing.name || '').trim();
+        if (!key) return;
+        var amt = (ing.amount || '').trim();
+        if (!map.has(key)) {
+          map.set(key, { name: key, amounts: amt ? [amt] : [], count: 1 });
+        } else {
+          var entry = map.get(key);
+          if (amt) entry.amounts.push(amt);
+          entry.count++;
+        }
+      });
+    });
+  });
+  var out = [];
+  map.forEach(function (v) {
+    var amount;
+    if (v.amounts.length === 0) {
+      amount = v.count > 1 ? ('×' + v.count + '回') : '';
+    } else {
+      // Join amounts; add count suffix if multiple
+      amount = v.amounts.join(' + ');
+    }
+    out.push({ name: v.name, amount: amount });
+  });
+  return out;
+}
+
+function addWeeklyIngredientsToShoppingList(weekly) {
+  var aggregated = getWeeklyAggregatedIngredients(weekly);
+  var fauxRecipe = {
+    name: (weekly.name || '1週間分の献立') + '（週間）',
+    ingredients: aggregated,
+  };
+  return addIngredientsToShoppingList(fauxRecipe);
+}
+
+function isWeeklyInShoppingList(weekly) {
+  var aggregated = getWeeklyAggregatedIngredients(weekly);
+  return isRecipeInShoppingList({ ingredients: aggregated });
+}
+
+async function generateWeekly() {
+  const resultEl = document.getElementById('result');
+  const btn = document.getElementById('generate-weekly');
+  const otherBtns = [
+    document.getElementById('generate'),
+    document.getElementById('generate-meal'),
+  ];
+
+  if (currentAbortController) {
+    currentAbortController.abort();
+    return;
+  }
+  currentAbortController = new AbortController();
+
+  btn.textContent = 'キャンセル';
+  btn.classList.add('cancel-state');
+  btn.setAttribute('aria-busy', 'true');
+  otherBtns.forEach(function (b) { if (b) b.disabled = true; });
+  resultEl.innerHTML = '<div class="card"><div class="loading"><div class="spinner"></div><div>1週間分の献立を考えています... (数十秒かかることがあります)</div></div></div>';
+
+  const sharedContext = {
+    食べたいもの: document.getElementById('craving').value.trim(),
+    冷蔵庫の食材: document.getElementById('ingredients').value.trim(),
+    人数: document.getElementById('servings').value.trim(),
+    調理時間: document.getElementById('time').value.trim(),
+    アレルギー制限: document.getElementById('allergy').value.trim(),
+    難易度: getChipValue('difficulty'),
+    気分シーン: getChipValue('mood'),
+  };
+
+  try {
+    // Fire all batches in parallel
+    const requests = WEEKLY_BATCHES.map(function (days) {
+      return fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: buildWeeklyPrompt(days, sharedContext) }),
+        signal: currentAbortController.signal,
+      }).then(async function (res) {
+        if (!res.ok) {
+          const errData = await res.json().catch(function () { return null; });
+          const errMsg = (errData && errData.error) || ('API エラー (' + res.status + ')');
+          throw new Error(errMsg);
+        }
+        return res.json();
+      });
+    });
+
+    const responses = await Promise.all(requests);
+
+    // Merge all days
+    const allDays = [];
+    responses.forEach(function (json, batchIdx) {
+      const text = json && json.text;
+      if (!text) throw new Error('Day ' + WEEKLY_BATCHES[batchIdx].join(',') + ' のレスポンスが空でした');
+      const parsed = parseWeeklyJson(text);
+      if (!parsed || !Array.isArray(parsed.days)) {
+        throw new Error('Day ' + WEEKLY_BATCHES[batchIdx].join(',') + ' の解析に失敗しました');
+      }
+      parsed.days.forEach(function (d) { allDays.push(d); });
+    });
+
+    if (allDays.length < WEEKLY_DAYS_TOTAL) {
+      // Try best-effort: fill with what we got, but warn
+      if (allDays.length === 0) {
+        throw new Error('1週間分の献立データが取得できませんでした');
+      }
+    }
+
+    // Sort by day number and renumber if needed
+    allDays.sort(function (a, b) { return (a.day || 0) - (b.day || 0); });
+    allDays.forEach(function (d, i) { d.day = i + 1; });
+
+    const stamp = new Date().toLocaleString('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+    const weekly = {
+      type: 'weekly',
+      name: '1週間分の献立 ' + stamp,
+      summary: '7日分の夕食献立を提案します。食材の使い回しと栄養バランスを意識しました。',
+      days: allDays.slice(0, WEEKLY_DAYS_TOTAL),
+    };
+
+    renderWeekly(weekly, true);
+  } catch (e) {
+    if (e.name === 'AbortError') {
+      resultEl.innerHTML = '<div class="card"><div class="error">リクエストをキャンセルしました。</div></div>';
+    } else {
+      resultEl.innerHTML = '<div class="card"><div class="error">' + escapeHtml(e.message) + '<br><button class="retry-btn" onclick="generateWeekly()">再試行</button></div></div>';
+    }
+  } finally {
+    currentAbortController = null;
+    btn.classList.remove('cancel-state');
+    btn.textContent = '📅 1週間分の献立を提案してもらう';
+    btn.setAttribute('aria-busy', 'false');
+    otherBtns.forEach(function (b) { if (b) b.disabled = false; });
+    updateButtonText();
+  }
+}
+
+function renderWeekly(w, addHistory) {
+  const faved = isFavorite(w);
+  const favBtnClass = faved ? 'fav-btn faved' : 'fav-btn not-faved';
+  const favBtnText = faved ? '❤️ お気に入り済み' : '🤍 お気に入りに追加';
+
+  const shopAdded = isWeeklyInShoppingList(w);
+  const shopBtnClass = shopAdded ? 'shop-add-btn weekly-shop-btn added' : 'shop-add-btn weekly-shop-btn not-added';
+  const shopBtnText = shopAdded ? '✅ 1週間分の食材を追加済み' : '🛒 1週間分の食材を買い物リストへ';
+
+  const days = w.days || [];
+  const tabsHtml = days.map(function (d, i) {
+    const cls = i === 0 ? 'day-tab active' : 'day-tab';
+    return '<div class="' + cls + '" data-idx="' + i + '" role="button" tabindex="0">Day ' + escapeHtml(String(d.day || (i + 1))) + '</div>';
+  }).join('');
+
+  const panelsHtml = days.map(function (d, i) {
+    const cls = i === 0 ? 'day-panel active' : 'day-panel';
+    const dishesHtml = (d.dishes || []).map(function (dish) {
+      const rc = roleClass(dish.role);
+      const ing = (dish.ingredients || []).map(function (ingredient) {
+        return '<li><span>' + escapeHtml(ingredient.name || '') + '</span><span>' + escapeHtml(ingredient.amount || '') + '</span></li>';
+      }).join('');
+      const steps = (dish.steps || []).map(function (s) {
+        return '<li>' + escapeHtml(s) + '</li>';
+      }).join('');
+      return '<div class="dish-block">' +
+        '<span class="dish-role ' + rc + '">' + escapeHtml(dish.role || '一品') + '</span>' +
+        '<div class="dish-name">' + escapeHtml(dish.name || '') + '</div>' +
+        '<div class="dish-meta">⏱ ' + escapeHtml(dish.time || '-') + '</div>' +
+        '<div class="dish-sub-title">食材</div>' +
+        '<ul class="ing">' + ing + '</ul>' +
+        '<div class="dish-sub-title">作り方</div>' +
+        '<ol class="steps">' + steps + '</ol>' +
+        '</div>';
+    }).join('');
+    return '<div class="' + cls + '" data-panel="' + i + '">' +
+      '<div class="day-title">Day ' + escapeHtml(String(d.day || (i + 1))) + '：' + escapeHtml(d.title || '献立') +
+      '<span class="day-total">⏱ ' + escapeHtml(d.totalTime || '-') + '</span></div>' +
+      dishesHtml +
+      '</div>';
+  }).join('');
+
+  document.getElementById('result').innerHTML =
+    '<div class="card recipe weekly-header">' +
+      '<h2>📅 ' + escapeHtml(w.name || '1週間分の献立') + (faved ? ' ⭐' : '') + '</h2>' +
+      '<button class="' + favBtnClass + '" id="fav-toggle">' + favBtnText + '</button>' +
+      (w.summary ? '<div class="weekly-summary">' + escapeHtml(w.summary) + '</div>' : '') +
+      '<button class="' + shopBtnClass + '" id="weekly-shop-toggle">' + shopBtnText + '</button>' +
+      '<div class="section-title">曜日を選択</div>' +
+      '<div class="day-tabs" role="tablist">' + tabsHtml + '</div>' +
+      panelsHtml +
+    '</div>';
+
+  // Day tab switching
+  const tabs = document.querySelectorAll('#result .day-tab');
+  const panels = document.querySelectorAll('#result .day-panel');
+  tabs.forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      const idx = parseInt(tab.dataset.idx, 10);
+      tabs.forEach(function (t) { t.classList.remove('active'); });
+      panels.forEach(function (p) { p.classList.remove('active'); });
+      tab.classList.add('active');
+      const panel = document.querySelector('#result .day-panel[data-panel="' + idx + '"]');
+      if (panel) panel.classList.add('active');
+    });
+    tab.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tab.click(); }
+    });
+  });
+
+  // Favorite toggle
+  const favBtn = document.getElementById('fav-toggle');
+  favBtn._recipe = w;
+  favBtn.addEventListener('click', function () {
+    if (isFavorite(w)) { removeFavorite(w); } else { addFavorite(w); }
+    const newFaved = isFavorite(w);
+    favBtn.className = 'fav-btn ' + (newFaved ? 'faved' : 'not-faved');
+    favBtn.textContent = newFaved ? '❤️ お気に入り済み' : '🤍 お気に入りに追加';
+    const h2 = document.querySelector('#result .recipe h2');
+    if (h2) {
+      h2.innerHTML = '📅 ' + escapeHtml(w.name || '1週間分の献立') + (newFaved ? ' ⭐' : '');
+    }
+  });
+
+  // Shopping list add
+  const shopBtn = document.getElementById('weekly-shop-toggle');
+  shopBtn._recipe = { ingredients: getWeeklyAggregatedIngredients(w) };
+  shopBtn.addEventListener('click', function () {
+    if (isWeeklyInShoppingList(w)) return;
+    const added = addWeeklyIngredientsToShoppingList(w);
+    shopBtn.className = 'shop-add-btn weekly-shop-btn added';
+    shopBtn.textContent = '✅ 1週間分の食材を追加済み（' + added + '品追加）';
+  });
+
+  document.getElementById('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  if (addHistory !== false) {
+    addToHistory(w);
+  }
+}
+
+document.getElementById('generate-weekly').addEventListener('click', generateWeekly);
 
 document.getElementById('generate-meal').addEventListener('click', generateMeal);
 
