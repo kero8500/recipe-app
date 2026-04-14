@@ -151,22 +151,31 @@
   ul.ing li:last-child { border-bottom: none; }
   ol.steps { padding-left: 20px; margin: 0; }
   ol.steps li { margin-bottom: 14px; font-size: 14px; }
-  ol.steps li .step-img-wrap {
-    margin: 8px 0 4px;
-    text-align: left;
+  /* Cooking-mode step image (shown only in the full-screen cooking overlay) */
+  .cooking-step-block .step-img-wrap {
+    margin: 14px 0 4px;
+    text-align: center;
   }
-  ol.steps li .step-img-wrap img {
+  .cooking-step-block .step-img-wrap img {
     max-width: 100%;
-    width: 320px;
+    width: 420px;
     height: auto;
-    border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.12);
     background: #f5f5f5;
-    display: block;
+    display: inline-block;
+    min-height: 220px;
   }
-  ol.steps li .step-img-wrap.step-img-failed { display: none; }
+  .cooking-step-block .step-img-wrap.step-img-failed img { display: none; }
+  .cooking-step-block .step-img-wrap.step-img-failed::after {
+    content: '（この手順の画像は取得できませんでした）';
+    display: block;
+    color: #999;
+    font-size: 12px;
+    padding: 8px 0;
+  }
   @media (min-width: 641px) {
-    ol.steps li .step-img-wrap img { width: 420px; }
+    .cooking-step-block .step-img-wrap img { width: 520px; }
   }
   .nutri {
     display: grid;
@@ -2717,10 +2726,8 @@ function openCookingMode(recipe) {
       '<div class="cooking-step-block">' +
         '<div class="cooking-step-num" id="cook-label"></div>' +
         '<div class="cooking-step-text" id="cook-text"></div>' +
-        '<div class="step-img-wrap" style="text-align:center;margin-top:12px;">' +
-          '<img id="cook-step-img" loading="lazy" decoding="async" alt=""' +
-          ' style="max-width:100%;width:420px;height:auto;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,0.12);background:#f5f5f5;display:inline-block;"' +
-          ' onerror="this.parentNode.classList.add(\'step-img-failed\')">' +
+        '<div class="step-img-wrap">' +
+          '<img id="cook-step-img" decoding="async" alt="">' +
         '</div>' +
       '</div>' +
       '<div class="cooking-info">' +
@@ -2745,18 +2752,27 @@ function openCookingMode(recipe) {
     overlay.querySelector('#cook-prog').textContent = (idx + 1) + ' / ' + steps.length;
     overlay.querySelector('#cook-prev').disabled = (idx === 0);
     overlay.querySelector('#cook-next').disabled = (idx === steps.length - 1);
-    // Update step image (per-step AI image)
+    // Update step image (per-step AI image) with one retry on error.
     var stepImgEl = overlay.querySelector('#cook-step-img');
     if (stepImgEl) {
       var info = steps[idx];
       var sName = info.recipeName || recipe.name || '';
       var sIngs = info.ingredientNames || [];
       var sIdx = (typeof info.subIndex === 'number') ? info.subIndex : idx;
-      var url = buildStepImageUrl(sName, sIdx, info.text, sIngs);
+      var primaryUrl = buildStepImageUrl(sName, sIdx, info.text, sIngs);
       var wrap = stepImgEl.parentNode;
       if (wrap) wrap.classList.remove('step-img-failed');
       stepImgEl.alt = (sName || '') + ' ステップ ' + (sIdx + 1);
-      stepImgEl.src = url;
+      // Retry once with a different seed if the first request fails, then mark failed.
+      stepImgEl.onerror = function () {
+        stepImgEl.onerror = function () {
+          if (wrap) wrap.classList.add('step-img-failed');
+          stepImgEl.onerror = null;
+        };
+        var retry = primaryUrl + '&retry=' + Date.now();
+        stepImgEl.src = retry;
+      };
+      stepImgEl.src = primaryUrl;
     }
   }
   function prev() { if (idx > 0) { idx--; render(); } }
@@ -2841,14 +2857,8 @@ function buildStepImageUrl(recipeName, stepIndex, stepText, ingredientNames) {
     '?width=512&height=384&seed=' + seed + '&nologo=true&model=flux';
 }
 function buildStepLiHtml(recipeName, stepIndex, stepText, ingredientNames) {
-  var url = buildStepImageUrl(recipeName, stepIndex, stepText, ingredientNames);
-  var altText = (recipeName || '') + ' ステップ ' + (stepIndex + 1);
-  return '<li>' + escapeHtml(stepText) +
-    '<div class="step-img-wrap">' +
-      '<img loading="lazy" decoding="async" src="' + escapeHtml(url) + '" alt="' + escapeHtml(altText) + '"' +
-      ' onerror="this.parentNode.classList.add(\'step-img-failed\')">' +
-    '</div>' +
-  '</li>';
+  // Normal recipe display: text only (images appear only in cooking mode).
+  return '<li>' + escapeHtml(stepText || '') + '</li>';
 }
 
 // --- AI food image generation (pollinations.ai, free, no-auth) ---
