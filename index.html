@@ -818,35 +818,41 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
-    text-align: center;
+    align-items: stretch;
+    padding: 16px;
     overflow-y: auto;
+    gap: 14px;
+  }
+  .cooking-step-block {
+    text-align: center;
+    padding: 8px 4px 4px;
   }
   .cooking-step-num {
-    font-size: 18px;
+    font-size: 16px;
     color: #8b4513;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
     font-weight: 700;
   }
   .cooking-step-text {
-    font-size: 26px;
+    font-size: 22px;
     line-height: 1.6;
     color: #333;
-    max-width: 600px;
+    max-width: 640px;
+    margin: 0 auto;
     font-weight: 500;
   }
   .cooking-nav {
     display: flex;
     gap: 10px;
-    padding: 16px;
+    padding: 12px 16px;
     justify-content: space-between;
     align-items: center;
+    border-top: 1px solid rgba(139, 69, 19, 0.15);
+    background: rgba(255, 255, 255, 0.6);
   }
   .cooking-nav button {
     flex: 1;
-    padding: 16px;
+    padding: 14px;
     font-size: 16px;
   }
   .cooking-nav button:disabled { opacity: 0.3; }
@@ -858,42 +864,43 @@
     text-align: center;
     font-weight: 700;
   }
-  /* Cooking-mode ingredients panel (collapsible) */
-  .cooking-ing-panel {
-    border-top: 2px solid #ffcc99;
-    background: rgba(255, 255, 255, 0.85);
-    max-height: 45vh;
+  /* Cooking-mode info (AI image + ingredients, always visible) */
+  .cooking-info {
     display: flex;
     flex-direction: column;
+    gap: 12px;
   }
-  .cooking-ing-toggle {
-    width: 100%;
-    padding: 10px 16px;
-    background: transparent;
-    border: none;
-    box-shadow: none;
+  .cooking-image {
+    text-align: center;
+  }
+  .cooking-image img {
+    max-width: 100%;
+    max-height: 28vh;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+    background: #f5f5f5;
+    object-fit: cover;
+  }
+  .cooking-ing-panel {
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid #ffcc99;
+    border-radius: 12px;
+    padding: 10px 14px 12px;
+  }
+  .cooking-ing-title {
     color: #8b4513;
     font-size: 14px;
     font-weight: 700;
-    text-align: left;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: pointer;
+    margin-bottom: 6px;
   }
-  .cooking-ing-toggle .chev { transition: transform 0.2s; font-size: 12px; }
-  .cooking-ing-panel.open .cooking-ing-toggle .chev { transform: rotate(180deg); }
   .cooking-ing-list {
-    display: none;
-    padding: 4px 16px 14px;
-    overflow-y: auto;
     font-size: 14px;
     color: #333;
   }
-  .cooking-ing-panel.open .cooking-ing-list { display: block; }
   .cooking-ing-list .dish-group {
     margin-bottom: 10px;
   }
+  .cooking-ing-list .dish-group:last-child { margin-bottom: 0; }
   .cooking-ing-list .dish-group-title {
     font-size: 12px;
     font-weight: 700;
@@ -915,6 +922,20 @@
   }
   .cooking-ing-list li span:first-child { color: #333; }
   .cooking-ing-list li span:last-child { color: #8b4513; font-weight: 600; white-space: nowrap; }
+  /* 2-column layout for wide/landscape screens */
+  @media (min-width: 900px) and (orientation: landscape) {
+    .cooking-body {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+    .cooking-step-block {
+      align-self: center;
+    }
+    .cooking-step-text { font-size: 26px; }
+    .cooking-image img { max-height: 40vh; }
+  }
 
   /* AI-generated recipe image */
   .recipe-image-box {
@@ -2648,25 +2669,34 @@ function openCookingMode(recipe) {
   var idx = 0;
   var overlay = document.createElement('div');
   overlay.className = 'cooking-overlay';
+  // Pull AI-generated image URL from the current recipe card if available
+  var aiImgEl = document.querySelector('#recipe-image-box img');
+  var aiImgSrc = aiImgEl && aiImgEl.src ? aiImgEl.src : '';
+  var imageBlockHtml = aiImgSrc
+    ? '<div class="cooking-image"><img src="' + escapeHtml(aiImgSrc) + '" alt="' + escapeHtml(recipe.name || '') + '"></div>'
+    : '';
   overlay.innerHTML =
     '<div class="cooking-header">' +
       '<div class="cooking-title">' + escapeHtml(recipe.name || '調理モード') + '</div>' +
       '<button type="button" class="cooking-close">✕ 閉じる</button>' +
     '</div>' +
     '<div class="cooking-body">' +
-      '<div class="cooking-step-num" id="cook-label"></div>' +
-      '<div class="cooking-step-text" id="cook-text"></div>' +
+      '<div class="cooking-step-block">' +
+        '<div class="cooking-step-num" id="cook-label"></div>' +
+        '<div class="cooking-step-text" id="cook-text"></div>' +
+      '</div>' +
+      '<div class="cooking-info">' +
+        imageBlockHtml +
+        '<div class="cooking-ing-panel">' +
+          '<div class="cooking-ing-title">🥬 材料・分量</div>' +
+          '<div class="cooking-ing-list">' + buildCookingIngredientsHtml(recipe) + '</div>' +
+        '</div>' +
+      '</div>' +
     '</div>' +
     '<div class="cooking-nav">' +
       '<button type="button" id="cook-prev">◀ 前</button>' +
       '<div class="cooking-progress" id="cook-prog"></div>' +
       '<button type="button" id="cook-next">次 ▶</button>' +
-    '</div>' +
-    '<div class="cooking-ing-panel" id="cook-ing-panel">' +
-      '<button type="button" class="cooking-ing-toggle" id="cook-ing-toggle" aria-expanded="false">' +
-        '<span>🥬 材料・分量を確認</span><span class="chev">▲</span>' +
-      '</button>' +
-      '<div class="cooking-ing-list" id="cook-ing-list">' + buildCookingIngredientsHtml(recipe) + '</div>' +
     '</div>';
   document.body.appendChild(overlay);
   document.body.style.overflow = 'hidden';
@@ -2694,15 +2724,6 @@ function openCookingMode(recipe) {
   overlay.querySelector('#cook-prev').addEventListener('click', prev);
   overlay.querySelector('#cook-next').addEventListener('click', next);
   overlay.querySelector('.cooking-close').addEventListener('click', close);
-  // Ingredients panel toggle
-  var ingPanel = overlay.querySelector('#cook-ing-panel');
-  var ingToggle = overlay.querySelector('#cook-ing-toggle');
-  if (ingToggle && ingPanel) {
-    ingToggle.addEventListener('click', function () {
-      var opened = ingPanel.classList.toggle('open');
-      ingToggle.setAttribute('aria-expanded', opened ? 'true' : 'false');
-    });
-  }
   // Swipe
   var startX = null;
   overlay.addEventListener('touchstart', function (e) { startX = e.touches[0].clientX; }, { passive: true });
