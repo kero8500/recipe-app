@@ -694,6 +694,247 @@
     .nutri div { padding: 12px 6px; }
     .nutri .val { font-size: 15px; }
   }
+
+  /* === New features CSS (TOP5 additions) === */
+  /* Top menu (tabs) */
+  .top-menu {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 0 0 12px;
+  }
+  .top-menu button {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 10px 8px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #8b4513;
+    background: #fff;
+    border: 1.5px solid #ffd4b0;
+    border-radius: 12px;
+    cursor: pointer;
+    box-shadow: none;
+    white-space: nowrap;
+  }
+  .top-menu button.active {
+    background: #e8590c;
+    color: #fff;
+    border-color: #e8590c;
+  }
+  .remix-hint {
+    font-size: 12px;
+    color: #8b4513;
+    background: #fff8ee;
+    border-left: 4px solid #ffaa4a;
+    padding: 8px 10px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+  }
+  /* Fridge (inventory) */
+  .fridge-item {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr auto;
+    gap: 6px;
+    padding: 8px 4px;
+    border-bottom: 1px dashed #ffd4b0;
+    align-items: center;
+    font-size: 13px;
+  }
+  .fridge-item.expiring { background: #fff3e6; }
+  .fridge-item.expired { background: #ffe0e0; }
+  .fridge-item input[type="text"], .fridge-item input[type="date"] {
+    padding: 6px 8px;
+    font-size: 13px;
+  }
+  .fridge-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    margin-left: 6px;
+  }
+  .fridge-badge.warn { background: #ffe8d6; color: #c33; }
+  .fridge-badge.expired { background: #ffd4d4; color: #a00; }
+  .fridge-badge.ok { background: #e8f5e9; color: #2e7d32; }
+  .fridge-delete-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+    width: auto;
+    background: #fff3e6;
+    color: #8b4513;
+    border: 1.5px solid #ffd4b0;
+    border-radius: 8px;
+    box-shadow: none;
+    cursor: pointer;
+  }
+  .fridge-add-row {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr auto;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .fridge-use-btn {
+    margin-top: 10px;
+  }
+  /* Cooking mode (fullscreen) */
+  .cooking-overlay {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(180deg, #fff7f0 0%, #ffe8d6 100%);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  .cooking-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+  }
+  .cooking-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #e8590c;
+    flex: 1;
+    margin-right: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .cooking-close {
+    width: auto;
+    padding: 8px 14px;
+    font-size: 13px;
+    background: #fff;
+    color: #e8590c;
+    border: 1.5px solid #e8590c;
+    border-radius: 20px;
+    box-shadow: none;
+  }
+  .cooking-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    text-align: center;
+    overflow-y: auto;
+  }
+  .cooking-step-num {
+    font-size: 18px;
+    color: #8b4513;
+    margin-bottom: 12px;
+    font-weight: 700;
+  }
+  .cooking-step-text {
+    font-size: 26px;
+    line-height: 1.6;
+    color: #333;
+    max-width: 600px;
+    font-weight: 500;
+  }
+  .cooking-nav {
+    display: flex;
+    gap: 10px;
+    padding: 16px;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .cooking-nav button {
+    flex: 1;
+    padding: 16px;
+    font-size: 16px;
+  }
+  .cooking-nav button:disabled { opacity: 0.3; }
+  .cooking-progress {
+    font-size: 13px;
+    color: #8b4513;
+    padding: 0 10px;
+    min-width: 60px;
+    text-align: center;
+    font-weight: 700;
+  }
+  /* Cook button in recipe */
+  .cook-btn {
+    display: inline-block;
+    width: auto;
+    margin-top: 8px;
+    margin-left: 6px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    background: linear-gradient(135deg, #42a5f5, #1976d2);
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(25, 118, 210, 0.3);
+  }
+  /* Adjust dialog */
+  .adjust-box {
+    background: #fff8ee;
+    border: 1.5px dashed #ffaa4a;
+    border-radius: 10px;
+    padding: 10px;
+    margin-top: 14px;
+  }
+  .adjust-box label {
+    font-size: 12px;
+    margin-bottom: 4px;
+  }
+  .adjust-box .row-input {
+    display: flex;
+    gap: 6px;
+  }
+  .adjust-box input {
+    flex: 1;
+  }
+  .adjust-box button {
+    width: auto;
+    padding: 8px 14px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+  .adjust-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+  }
+  .adjust-chips .chip {
+    font-size: 11px;
+    padding: 4px 10px;
+  }
+  .recipe-version-note {
+    font-size: 11px;
+    color: #8b4513;
+    background: #fff3e6;
+    padding: 6px 10px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+  }
+  /* Streaming preview */
+  .stream-preview {
+    background: #fff8ee;
+    border-left: 4px solid #ffaa4a;
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    max-height: 300px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    color: #6b4423;
+    margin-top: 10px;
+    font-family: ui-monospace, Menlo, monospace;
+  }
+  /* Panels */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
 </style>
 </head>
 <body>
@@ -703,9 +944,16 @@
     <p>あなたにぴったりのレシピをAIが考えます</p>
   </header>
 
+  <div class="top-menu" role="tablist" aria-label="機能切替">
+    <button type="button" data-panel="panel-recipe" class="active" role="tab">🍳 レシピ</button>
+    <button type="button" data-panel="panel-remix" role="tab">🥡 リメイク</button>
+    <button type="button" data-panel="panel-fridge" role="tab">🧊 冷蔵庫</button>
+  </div>
+
+  <div id="panel-recipe" class="panel active">
   <div class="card">
     <div class="field">
-      <label for="craving">🍽 食べたいもの・料理のイメージ</label>
+      <label for="craving">🍽 食べたいもの・料理のイメージ（冷蔵庫にあるものから発想）</label>
       <input type="text" id="craving" placeholder="例：さっぱりした和食" aria-label="食べたいもの・料理のイメージ">
     </div>
     <div class="field">
@@ -747,6 +995,37 @@
     <button id="generate" aria-busy="false">おまかせでレシピを提案してもらう</button>
     <button id="generate-meal" class="btn-meal" aria-busy="false">🍱 1食分の献立を提案してもらう</button>
     <button id="generate-weekly" class="btn-weekly" aria-busy="false">📅 1週間分の献立を提案してもらう</button>
+  </div>
+  </div><!-- /panel-recipe -->
+
+  <div id="panel-remix" class="panel">
+    <div class="card">
+      <div class="remix-hint">昨日の残り料理や余った食材から、別の一品にリメイクします。</div>
+      <div class="field">
+        <label for="remix-leftover">🥡 余り物・昨日の料理</label>
+        <textarea id="remix-leftover" placeholder="例：昨日の肉じゃがの残り、鶏の唐揚げ3個、半端なキャベツ" aria-label="余り物"></textarea>
+      </div>
+      <div class="field">
+        <label for="remix-wish">✨ どうしたい？（任意）</label>
+        <input type="text" id="remix-wish" placeholder="例：別の料理に変えたい／パスタにしたい" aria-label="リメイクの希望">
+      </div>
+      <button id="generate-remix" aria-busy="false">🥡 余り物をリメイクする</button>
+    </div>
+  </div>
+
+  <div id="panel-fridge" class="panel">
+    <div class="card">
+      <h3 style="margin:0 0 10px; color:#e8590c; font-size:18px;">🧊 冷蔵庫の在庫</h3>
+      <div class="remix-hint">食材・数量・賞味期限を登録。期限が近いものは強調表示されます。最大100件。</div>
+      <div class="fridge-add-row">
+        <input type="text" id="fridge-name" placeholder="食材名（例：鶏肉）" aria-label="食材名">
+        <input type="text" id="fridge-amount" placeholder="数量（例：300g）" aria-label="数量">
+        <input type="date" id="fridge-expiry" aria-label="賞味期限">
+        <button id="fridge-add" style="width:auto; padding:8px 14px; font-size:13px; white-space:nowrap;">追加</button>
+      </div>
+      <div id="fridge-list"></div>
+      <button id="fridge-use" class="fridge-use-btn">🍳 在庫から献立を提案</button>
+    </div>
   </div>
 
   <!-- #15: aria-live for screen reader updates -->
@@ -1426,6 +1705,22 @@ function renderRecipe(r, addHistory) {
       </div>
       <div class="section-title">ポイント・アレンジ</div>
       <div class="tip">${escapeHtml(r.tips || '')}</div>
+      <div style="margin-top:12px;">
+        <button class="cook-btn" id="cook-start">👨‍🍳 調理を始める（ステップ表示）</button>
+      </div>
+      <div class="adjust-box">
+        <label>🔧 このレシピを調整する</label>
+        <div class="row-input">
+          <input type="text" id="adjust-input" placeholder="例：鶏肉を豚肉に、もっと薄味に">
+          <button id="adjust-go">調整</button>
+        </div>
+        <div class="adjust-chips">
+          <div class="chip" data-adjust="もっと薄味にしてください">薄味に</div>
+          <div class="chip" data-adjust="子供が喜ぶように甘めに調整してください">子供向け</div>
+          <div class="chip" data-adjust="糖質を控えめにしてください">低糖質</div>
+          <div class="chip" data-adjust="作り置き向きに変更してください">作り置き</div>
+        </div>
+      </div>
     </div>
   `;
 
@@ -1642,6 +1937,9 @@ function renderMeal(m, addHistory) {
       </div>
       <div class="section-title">段取り・ポイント</div>
       <div class="tip">${escapeHtml(m.tips || '')}</div>
+      <div style="margin-top:12px;">
+        <button class="cook-btn" id="cook-start-meal">👨‍🍳 調理モード（献立を順に）</button>
+      </div>
     </div>
   `;
 
@@ -1991,6 +2289,498 @@ document.getElementById('generate').addEventListener('click', generateRecipe);
 renderFavorites();
 renderShoppingList();
 renderHistory();
+
+
+// =========================================================
+// === New features (TOP5): panel switching, fridge, remix,
+//     cooking mode, adjust, streaming helper
+// =========================================================
+
+// --- Panel switch ---
+(function () {
+  var menu = document.querySelector('.top-menu');
+  if (!menu) return;
+  menu.addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-panel]');
+    if (!btn) return;
+    var target = btn.dataset.panel;
+    menu.querySelectorAll('button').forEach(function (b) { b.classList.toggle('active', b === btn); });
+    ['panel-recipe', 'panel-remix', 'panel-fridge'].forEach(function (id) {
+      var p = document.getElementById(id);
+      if (p) p.classList.toggle('active', id === target);
+    });
+    if (target === 'panel-fridge') renderFridge();
+  });
+})();
+
+// --- Fridge inventory ---
+var FRIDGE_KEY = 'recipeFridge';
+var FRIDGE_MAX = 100;
+function loadFridge() {
+  try { return JSON.parse(localStorage.getItem(FRIDGE_KEY)) || []; } catch { return []; }
+}
+function saveFridge(list) {
+  try { localStorage.setItem(FRIDGE_KEY, JSON.stringify(list)); } catch {}
+}
+function addFridgeItem(name, amount, expiry) {
+  var list = loadFridge();
+  if (list.length >= FRIDGE_MAX) {
+    alert('冷蔵庫の登録数が上限（' + FRIDGE_MAX + '件）に達しています。古いものを削除してください。');
+    return false;
+  }
+  list.push({
+    id: 'fridge-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+    name: name, amount: amount, expiry: expiry,
+    createdAt: new Date().toISOString(),
+  });
+  saveFridge(list);
+  return true;
+}
+function removeFridgeItem(id) {
+  var list = loadFridge().filter(function (x) { return x.id !== id; });
+  saveFridge(list);
+}
+function fridgeDaysLeft(expiry) {
+  if (!expiry) return null;
+  var d = new Date(expiry + 'T23:59:59');
+  if (isNaN(d)) return null;
+  var diff = Math.ceil((d - new Date()) / 86400000);
+  return diff;
+}
+function renderFridge() {
+  var container = document.getElementById('fridge-list');
+  if (!container) return;
+  var list = loadFridge().slice().sort(function (a, b) {
+    var da = fridgeDaysLeft(a.expiry);
+    var db = fridgeDaysLeft(b.expiry);
+    if (da === null && db === null) return 0;
+    if (da === null) return 1;
+    if (db === null) return -1;
+    return da - db;
+  });
+  if (list.length === 0) {
+    container.innerHTML = '<div style="color:#8b4513; font-size:13px; padding:10px 0;">まだ在庫が登録されていません。</div>';
+    return;
+  }
+  container.innerHTML = list.map(function (item) {
+    var days = fridgeDaysLeft(item.expiry);
+    var cls = 'fridge-item';
+    var badge = '';
+    if (days !== null) {
+      if (days < 0) {
+        cls += ' expired';
+        badge = '<span class="fridge-badge expired">期限切れ</span>';
+      } else if (days <= 3) {
+        cls += ' expiring';
+        badge = '<span class="fridge-badge warn">あと' + days + '日</span>';
+      } else {
+        badge = '<span class="fridge-badge ok">あと' + days + '日</span>';
+      }
+    }
+    return '<div class="' + cls + '">' +
+      '<div>' + escapeHtml(item.name) + badge + '</div>' +
+      '<div style="font-size:12px; color:#8b4513;">' + escapeHtml(item.amount || '-') + '</div>' +
+      '<div style="font-size:11px; color:#8b4513;">' + escapeHtml(item.expiry || '期限なし') + '</div>' +
+      '<button class="fridge-delete-btn" data-id="' + escapeHtml(item.id) + '">削除</button>' +
+      '</div>';
+  }).join('');
+  container.querySelectorAll('.fridge-delete-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      removeFridgeItem(btn.dataset.id);
+      renderFridge();
+    });
+  });
+}
+(function () {
+  var addBtn = document.getElementById('fridge-add');
+  if (!addBtn) return;
+  addBtn.addEventListener('click', function () {
+    var name = document.getElementById('fridge-name').value.trim();
+    var amount = document.getElementById('fridge-amount').value.trim();
+    var expiry = document.getElementById('fridge-expiry').value;
+    if (!name) { alert('食材名を入力してください。'); return; }
+    if (addFridgeItem(name, amount, expiry)) {
+      document.getElementById('fridge-name').value = '';
+      document.getElementById('fridge-amount').value = '';
+      document.getElementById('fridge-expiry').value = '';
+      renderFridge();
+    }
+  });
+  var useBtn = document.getElementById('fridge-use');
+  if (useBtn) {
+    useBtn.addEventListener('click', function () {
+      var list = loadFridge();
+      if (list.length === 0) {
+        alert('冷蔵庫が空です。先に食材を追加してください。');
+        return;
+      }
+      // Prioritize items expiring soon (<=3 days) or expired
+      var prio = list.filter(function (x) {
+        var d = fridgeDaysLeft(x.expiry);
+        return d !== null && d <= 3;
+      });
+      var allNames = list.map(function (x) { return x.name + (x.amount ? '(' + x.amount + ')' : ''); }).join('、');
+      var prioNames = prio.map(function (x) { return x.name; }).join('、');
+      // Fill into main ingredients field + craving, then switch to recipe panel and trigger generateRecipe
+      var ingEl = document.getElementById('ingredients');
+      var cravingEl = document.getElementById('craving');
+      ingEl.value = allNames;
+      if (prioNames) cravingEl.value = '期限間近の「' + prioNames + '」を優先的に使って';
+      // Switch panel
+      document.querySelector('.top-menu button[data-panel="panel-recipe"]').click();
+      setTimeout(function () { generateRecipe(); }, 100);
+    });
+  }
+})();
+
+// --- Remix (leftover -> new recipe) ---
+(function () {
+  var btn = document.getElementById('generate-remix');
+  if (!btn) return;
+  btn.addEventListener('click', async function () {
+    var leftover = document.getElementById('remix-leftover').value.trim();
+    var wish = document.getElementById('remix-wish').value.trim();
+    if (!leftover) { alert('余り物・昨日の料理を入力してください。'); return; }
+    var resultEl = document.getElementById('result');
+    if (currentAbortController) { currentAbortController.abort(); return; }
+    currentAbortController = new AbortController();
+    btn.disabled = true;
+    btn.setAttribute('aria-busy', 'true');
+    resultEl.innerHTML = '<div class="card"><div class="loading"><div class="spinner"></div><div>リメイクを考えています...</div></div></div>';
+    try {
+      var prompt = 'あなたは料理研究家です。以下の「余り物・昨日の料理」を活用した、別の新しい一品のレシピを1つ提案してください。余り物をそのまま温めるのではなく、味付け・組み合わせ・調理法を工夫して別料理にリメイクしてください。\n' +
+        '【余り物】\n' + leftover + '\n' +
+        (wish ? '【希望】\n' + wish + '\n' : '') +
+        '\n必ず以下のJSON形式のみで回答してください（前後に説明文を付けない）:\n' +
+        '{\n' +
+        '  "name": "リメイク料理名",\n' +
+        '  "time": "調理時間",\n' +
+        '  "difficulty": "難易度",\n' +
+        '  "cost": "追加費用の目安",\n' +
+        '  "ingredients": [{"name": "食材名", "amount": "分量"}],\n' +
+        '  "steps": ["手順1", "手順2"],\n' +
+        '  "nutrition": {"calories": "kcal", "protein": "g", "carbs": "g", "fat": "g", "salt": "g"},\n' +
+        '  "tips": "リメイクのコツ"\n' +
+        '}';
+      var res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: prompt }),
+        signal: currentAbortController.signal,
+      });
+      if (!res.ok) {
+        var errData = await res.json().catch(function () { return null; });
+        throw new Error((errData && errData.error) || ('API エラー (' + res.status + ')'));
+      }
+      var json = await res.json();
+      var text = json.text;
+      if (!text) throw new Error('レスポンスが空でした');
+      var recipe = parseRecipeJson(text);
+      if (!recipe) {
+        resultEl.innerHTML = '<div class="card"><div class="error">リメイクの生成に失敗しました。もう一度お試しください。</div></div>';
+        return;
+      }
+      renderRecipe(recipe, true);
+    } catch (e) {
+      if (e.name === 'AbortError') {
+        resultEl.innerHTML = '<div class="card"><div class="error">リクエストをキャンセルしました。</div></div>';
+      } else {
+        resultEl.innerHTML = '<div class="card"><div class="error">' + escapeHtml(e.message) + '</div></div>';
+      }
+    } finally {
+      currentAbortController = null;
+      btn.disabled = false;
+      btn.setAttribute('aria-busy', 'false');
+    }
+  });
+})();
+
+// --- Cooking mode (step-by-step fullscreen + Wake Lock) ---
+var cookingWakeLock = null;
+async function requestWakeLock() {
+  try {
+    if ('wakeLock' in navigator) {
+      cookingWakeLock = await navigator.wakeLock.request('screen');
+    }
+  } catch { /* ignore */ }
+}
+function releaseWakeLock() {
+  try { if (cookingWakeLock) { cookingWakeLock.release(); cookingWakeLock = null; } } catch {}
+}
+function buildCookingSteps(recipe) {
+  // Returns array of { label, text } for both single recipe and meal
+  var steps = [];
+  if (recipe && Array.isArray(recipe.steps)) {
+    recipe.steps.forEach(function (s, i) {
+      steps.push({ label: 'ステップ ' + (i + 1), text: s });
+    });
+  } else if (recipe && Array.isArray(recipe.dishes)) {
+    recipe.dishes.forEach(function (dish) {
+      (dish.steps || []).forEach(function (s, i) {
+        steps.push({ label: (dish.role || '') + ' ' + (dish.name || '') + ' - ステップ ' + (i + 1), text: s });
+      });
+    });
+  }
+  return steps;
+}
+function openCookingMode(recipe) {
+  var steps = buildCookingSteps(recipe);
+  if (steps.length === 0) { alert('手順がありません。'); return; }
+  var idx = 0;
+  var overlay = document.createElement('div');
+  overlay.className = 'cooking-overlay';
+  overlay.innerHTML =
+    '<div class="cooking-header">' +
+      '<div class="cooking-title">' + escapeHtml(recipe.name || '調理モード') + '</div>' +
+      '<button type="button" class="cooking-close">✕ 閉じる</button>' +
+    '</div>' +
+    '<div class="cooking-body">' +
+      '<div class="cooking-step-num" id="cook-label"></div>' +
+      '<div class="cooking-step-text" id="cook-text"></div>' +
+    '</div>' +
+    '<div class="cooking-nav">' +
+      '<button type="button" id="cook-prev">◀ 前</button>' +
+      '<div class="cooking-progress" id="cook-prog"></div>' +
+      '<button type="button" id="cook-next">次 ▶</button>' +
+    '</div>';
+  document.body.appendChild(overlay);
+  document.body.style.overflow = 'hidden';
+
+  function render() {
+    overlay.querySelector('#cook-label').textContent = steps[idx].label;
+    overlay.querySelector('#cook-text').textContent = steps[idx].text;
+    overlay.querySelector('#cook-prog').textContent = (idx + 1) + ' / ' + steps.length;
+    overlay.querySelector('#cook-prev').disabled = (idx === 0);
+    overlay.querySelector('#cook-next').disabled = (idx === steps.length - 1);
+  }
+  function prev() { if (idx > 0) { idx--; render(); } }
+  function next() { if (idx < steps.length - 1) { idx++; render(); } }
+  function close() {
+    document.body.style.overflow = '';
+    overlay.remove();
+    releaseWakeLock();
+    document.removeEventListener('keydown', onKey);
+  }
+  function onKey(e) {
+    if (e.key === 'ArrowLeft') prev();
+    else if (e.key === 'ArrowRight') next();
+    else if (e.key === 'Escape') close();
+  }
+  overlay.querySelector('#cook-prev').addEventListener('click', prev);
+  overlay.querySelector('#cook-next').addEventListener('click', next);
+  overlay.querySelector('.cooking-close').addEventListener('click', close);
+  // Swipe
+  var startX = null;
+  overlay.addEventListener('touchstart', function (e) { startX = e.touches[0].clientX; }, { passive: true });
+  overlay.addEventListener('touchend', function (e) {
+    if (startX === null) return;
+    var dx = e.changedTouches[0].clientX - startX;
+    if (Math.abs(dx) > 50) { if (dx > 0) prev(); else next(); }
+    startX = null;
+  });
+  document.addEventListener('keydown', onKey);
+  render();
+  requestWakeLock();
+  // Re-acquire on visibility regain
+  document.addEventListener('visibilitychange', function onVis() {
+    if (document.visibilityState === 'visible' && document.body.contains(overlay)) {
+      requestWakeLock();
+    }
+  });
+}
+
+// Wire cook buttons (delegated on #result)
+document.getElementById('result').addEventListener('click', function (e) {
+  if (e.target && e.target.id === 'cook-start') {
+    var btn = document.getElementById('fav-toggle');
+    var recipe = btn && btn._recipe;
+    if (recipe) openCookingMode(recipe);
+  } else if (e.target && e.target.id === 'cook-start-meal') {
+    var btn2 = document.getElementById('fav-toggle');
+    var meal = btn2 && btn2._recipe;
+    if (meal) openCookingMode(meal);
+  } else if (e.target && e.target.id === 'adjust-go') {
+    adjustCurrentRecipe();
+  } else if (e.target && e.target.classList && e.target.classList.contains('chip') && e.target.dataset.adjust) {
+    var input = document.getElementById('adjust-input');
+    if (input) input.value = e.target.dataset.adjust;
+  }
+});
+
+// --- Adjust recipe (dialogue refinement) ---
+async function adjustCurrentRecipe() {
+  var btn = document.getElementById('fav-toggle');
+  var currentRecipe = btn && btn._recipe;
+  if (!currentRecipe) { alert('対象のレシピがありません。'); return; }
+  if (isMeal(currentRecipe) || isWeekly(currentRecipe)) {
+    alert('調整は単品レシピのみ対応しています。');
+    return;
+  }
+  var input = document.getElementById('adjust-input');
+  var instruction = input && input.value.trim();
+  if (!instruction) { alert('調整内容を入力してください。'); return; }
+
+  var goBtn = document.getElementById('adjust-go');
+  var resultEl = document.getElementById('result');
+  if (currentAbortController) { currentAbortController.abort(); }
+  currentAbortController = new AbortController();
+  if (goBtn) { goBtn.disabled = true; goBtn.textContent = '調整中...'; }
+
+  try {
+    var prompt = 'あなたは料理研究家です。以下の既存レシピを、ユーザーの指示に従って調整し、更新後のレシピをJSONで返してください。料理名・分量・手順・栄養素・ポイントを整合するよう見直してください。\n' +
+      '【既存レシピJSON】\n' + JSON.stringify(currentRecipe) + '\n\n' +
+      '【調整指示】\n' + instruction + '\n\n' +
+      '必ず以下のJSON形式のみで回答してください（前後に説明文を付けない）:\n' +
+      '{\n' +
+      '  "name": "料理名",\n' +
+      '  "time": "調理時間",\n' +
+      '  "difficulty": "難易度",\n' +
+      '  "cost": "目安費用（円）",\n' +
+      '  "ingredients": [{"name": "食材名", "amount": "分量"}],\n' +
+      '  "steps": ["手順1", "手順2"],\n' +
+      '  "nutrition": {"calories": "kcal", "protein": "g", "carbs": "g", "fat": "g", "salt": "g"},\n' +
+      '  "tips": "料理のポイント・アレンジ"\n' +
+      '}';
+    var res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: prompt }),
+      signal: currentAbortController.signal,
+    });
+    if (!res.ok) {
+      var errData = await res.json().catch(function () { return null; });
+      throw new Error((errData && errData.error) || ('API エラー (' + res.status + ')'));
+    }
+    var json = await res.json();
+    var text = json.text;
+    if (!text) throw new Error('レスポンスが空でした');
+    var updated = parseRecipeJson(text);
+    if (!updated) throw new Error('調整結果の解析に失敗しました');
+    // Keep version note: the previous recipe is saved in history already
+    renderRecipe(updated, true);
+    // Prepend a note
+    var card = document.querySelector('#result .recipe');
+    if (card) {
+      var note = document.createElement('div');
+      note.className = 'recipe-version-note';
+      note.textContent = '🔧 「' + instruction + '」に基づいて調整しました（前バージョンは履歴に保存されています）';
+      card.insertBefore(note, card.firstChild.nextSibling);
+    }
+  } catch (e) {
+    if (e.name !== 'AbortError') alert('調整に失敗しました: ' + e.message);
+  } finally {
+    currentAbortController = null;
+    if (goBtn) { goBtn.disabled = false; goBtn.textContent = '調整'; }
+  }
+}
+
+// --- Streaming (single recipe only: hook into generateRecipe) ---
+// We monkey-patch generateRecipe to try streaming first, fallback to existing on failure.
+(function () {
+  if (typeof generateRecipe !== 'function') return;
+  var original = generateRecipe;
+  window.generateRecipe = async function () {
+    var resultEl = document.getElementById('result');
+    var btn = document.getElementById('generate');
+    if (currentAbortController) { currentAbortController.abort(); return; }
+    currentAbortController = new AbortController();
+    var mealBtn = document.getElementById('generate-meal');
+    var weeklyBtn = document.getElementById('generate-weekly');
+    btn.disabled = false;
+    btn.textContent = 'キャンセル';
+    btn.classList.add('cancel-state');
+    btn.setAttribute('aria-busy', 'true');
+    if (mealBtn) mealBtn.disabled = true;
+    if (weeklyBtn) weeklyBtn.disabled = true;
+    resultEl.innerHTML = '<div class="card"><div class="loading"><div class="spinner"></div><div>レシピを考えています...</div><div class="stream-preview" id="stream-preview" style="display:none;"></div></div></div>';
+
+    try {
+      var res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
+        body: JSON.stringify({ prompt: buildPrompt(), stream: true }),
+        signal: currentAbortController.signal,
+      });
+      if (!res.ok) {
+        var errData = await res.json().catch(function () { return null; });
+        throw new Error((errData && errData.error) || ('API エラー (' + res.status + ')'));
+      }
+      var ct = res.headers.get('content-type') || '';
+      var fullText = '';
+      if (ct.indexOf('text/event-stream') >= 0 && res.body) {
+        var reader = res.body.getReader();
+        var decoder = new TextDecoder();
+        var buffer = '';
+        var preview = document.getElementById('stream-preview');
+        if (preview) preview.style.display = 'block';
+        while (true) {
+          var chunk = await reader.read();
+          if (chunk.done) break;
+          buffer += decoder.decode(chunk.value, { stream: true });
+          var lines = buffer.split('\n');
+          buffer = lines.pop();
+          for (var i = 0; i < lines.length; i++) {
+            var line = lines[i].trim();
+            if (!line.startsWith('data:')) continue;
+            var data = line.slice(5).trim();
+            if (data === '[DONE]') continue;
+            try {
+              var j = JSON.parse(data);
+              var delta = j.choices && j.choices[0] && j.choices[0].delta && j.choices[0].delta.content;
+              if (delta) {
+                fullText += delta;
+                if (preview) {
+                  preview.textContent = fullText.slice(-500);
+                  preview.scrollTop = preview.scrollHeight;
+                }
+              }
+            } catch { /* non-JSON data line */ }
+          }
+        }
+      } else {
+        // Fallback: plain JSON response
+        var json = await res.json();
+        fullText = json.text || '';
+      }
+      if (!fullText) throw new Error('レスポンスが空でした');
+      var recipe = parseRecipeJson(fullText);
+      if (!recipe) {
+        resultEl.innerHTML = '<div class="card"><div class="error">レシピの生成に失敗しました。もう一度お試しください。<br><button class="retry-btn" onclick="generateRecipe()">再試行</button></div></div>';
+        return;
+      }
+      renderRecipe(recipe, true);
+    } catch (e) {
+      if (e.name === 'AbortError') {
+        resultEl.innerHTML = '<div class="card"><div class="error">リクエストをキャンセルしました。</div></div>';
+      } else {
+        resultEl.innerHTML = '<div class="card"><div class="error">' + escapeHtml(e.message) + '<br><button class="retry-btn" onclick="generateRecipe()">再試行</button></div></div>';
+      }
+    } finally {
+      currentAbortController = null;
+      btn.classList.remove('cancel-state');
+      btn.disabled = false;
+      btn.setAttribute('aria-busy', 'false');
+      var mb = document.getElementById('generate-meal');
+      if (mb) mb.disabled = false;
+      var wb = document.getElementById('generate-weekly');
+      if (wb) wb.disabled = false;
+      updateButtonText();
+    }
+  };
+})();
+
+// Rebind generate button click to use streaming wrapper
+(function () {
+  var btn = document.getElementById('generate');
+  if (!btn) return;
+  var fresh = btn.cloneNode(true);
+  btn.parentNode.replaceChild(fresh, btn);
+  fresh.addEventListener('click', function () { window.generateRecipe(); });
+})();
+
+// Init fridge render on load in case user opens panel
+renderFridge();
+
 </script>
 </body>
 </html>
