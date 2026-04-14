@@ -1742,6 +1742,172 @@
     border-radius: 8px;
     font-size: 14px;
   }
+
+  /* === Phase 3: Candidate card stack (Tinder-like) & cooking mode enhance === */
+  .cand-stack {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    margin: 10px auto 16px;
+    height: 420px;
+    touch-action: pan-y;
+  }
+  @media (max-width: 380px) {
+    .cand-stack { height: 380px; }
+  }
+  .cand-stack .cand-swipe-card {
+    position: absolute;
+    inset: 0;
+    background: #fff;
+    border: 1px solid #ffd4b0;
+    border-radius: 18px;
+    box-shadow: 0 8px 24px rgba(139,69,19,0.15);
+    padding: 18px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: transform 0.25s ease, opacity 0.25s ease;
+    will-change: transform;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .cand-stack .cand-swipe-card.top { z-index: 3; }
+  .cand-stack .cand-swipe-card.mid { z-index: 2; transform: scale(0.96) translateY(10px); opacity: 0.92; }
+  .cand-stack .cand-swipe-card.back { z-index: 1; transform: scale(0.92) translateY(20px); opacity: 0.78; }
+  .cand-stack .cand-swipe-card .cc-num {
+    font-size: 11px;
+    color: #8b4513;
+    font-weight: 700;
+    opacity: 0.7;
+  }
+  .cand-stack .cand-swipe-card .cc-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #333;
+    line-height: 1.3;
+  }
+  .cand-stack .cand-swipe-card .cc-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .cand-stack .cand-swipe-card .cc-meta span {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    background: #fff3e6;
+    color: #8b4513;
+    font-weight: 600;
+  }
+  .cand-stack .cand-swipe-card .cc-summary {
+    font-size: 13px;
+    color: #555;
+    line-height: 1.55;
+    overflow-y: auto;
+    flex: 1;
+  }
+  .cand-stack .cand-swipe-card .cc-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 6px;
+  }
+  .cand-stack .cand-swipe-card .cc-actions button {
+    min-height: 44px;
+    padding: 10px 8px;
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: 10px;
+    cursor: pointer;
+    border: 1.5px solid #ffd4b0;
+    background: #fff;
+    color: #8b4513;
+    box-shadow: none;
+  }
+  .cand-stack .cand-swipe-card .cc-actions .cc-decide {
+    background: linear-gradient(135deg,#ff8c42,#e8590c);
+    color: #fff;
+    border-color: transparent;
+  }
+  .cand-stack .cand-swipe-card .cc-actions .cc-skip { background: #fff3e6; }
+
+  .cand-stack .cc-overlay-label {
+    position: absolute;
+    top: 24px;
+    padding: 6px 14px;
+    font-size: 14px;
+    font-weight: 800;
+    border-radius: 8px;
+    letter-spacing: 1px;
+    opacity: 0;
+    transition: opacity 0.1s ease;
+    border: 2px solid currentColor;
+    background: rgba(255,255,255,0.95);
+  }
+  .cand-stack .cc-overlay-label.like { right: 20px; color: #2e7d32; transform: rotate(14deg); }
+  .cand-stack .cc-overlay-label.nope { left: 20px; color: #c33; transform: rotate(-14deg); }
+  .cand-stack .cc-overlay-label.up { left: 50%; transform: translateX(-50%); color: #c7860a; top: 10px; }
+  .cand-stack .cc-overlay-label.down { left: 50%; transform: translateX(-50%); bottom: 20px; top: auto; color: #666; }
+
+  .cand-dots {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    margin: 6px 0 10px;
+  }
+  .cand-dots span {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #ffd4b0;
+    transition: background 0.2s ease, width 0.2s ease;
+  }
+  .cand-dots span.active { background: #e8590c; width: 22px; border-radius: 5px; }
+
+  .cand-hints {
+    font-size: 12px;
+    color: #8b4513;
+    text-align: center;
+    margin-bottom: 10px;
+    padding: 8px 10px;
+    background: #fff8ee;
+    border-radius: 10px;
+    border-left: 3px solid #ffaa4a;
+    line-height: 1.5;
+  }
+  .cand-hints .hint-close {
+    margin-left: 6px;
+    font-size: 11px;
+    color: #8b4513;
+    background: transparent;
+    border: 1px solid #ffd4b0;
+    border-radius: 4px;
+    padding: 2px 6px;
+    cursor: pointer;
+  }
+
+  /* Cooking mode enhancements (Phase 3) */
+  .cooking-overlay .cooking-step-text { font-size: 36px; line-height: 1.5; }
+  @media (min-width: 900px) and (orientation: landscape) {
+    .cooking-overlay .cooking-step-text { font-size: 40px; }
+  }
+  .cooking-nav button {
+    min-height: 52px;
+    font-size: 17px;
+  }
+  .cooking-overlay .cooking-step-block { position: relative; }
+  .cooking-overlay .swipe-feedback {
+    position: absolute;
+    top: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #e8590c;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    pointer-events: none;
+  }
+  .cooking-overlay .swipe-feedback.show { opacity: 1; }
+  .cooking-overlay .swipe-feedback.left { left: 16px; }
+  .cooking-overlay .swipe-feedback.right { right: 16px; }
 </style>
 </head>
 <body>
@@ -5067,6 +5233,258 @@ renderFridge();
   // Initial re-render
   try { window.renderShoppingList(); } catch (_) {}
   try { window.renderFavorites(); } catch (_) {}
+})();
+
+
+/* === Phase 3: Tinder-style candidate swipe & cooking mode enhance === */
+(function () {
+  function htmlEscape(s) { return (s == null ? '' : String(s)).replace(/[&<>"']/g, function (c) { return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]; }); }
+  var HINTS_KEY = 'recipeCandidateHintsShown';
+
+  var origRenderCandidates = window.renderCandidates;
+  window.renderCandidates = function (candidates, type) {
+    var resultEl = document.getElementById('result');
+    if (!resultEl || !Array.isArray(candidates) || candidates.length === 0) return;
+    var title = type === 'meal' ? '🍱 献立の候補3つ' : '🍳 レシピの候補3つ';
+    var order = candidates.map(function (_, i) { return i; });
+    var position = 0;
+    var rejected = {};
+    var hintsShown = false;
+    try { hintsShown = localStorage.getItem(HINTS_KEY) === '1'; } catch (_) {}
+
+    function cardHtml(c, idx, pos) {
+      var name = c.name || (type === 'meal' ? '献立' + (idx + 1) : 'レシピ' + (idx + 1));
+      var time = type === 'meal' ? (c.totalTime || c.time || '-') : (c.time || '-');
+      var difficulty = c.difficulty || '-';
+      var cost = c.cost || '-';
+      var summary = c.summary || '';
+      var posClass = pos === 0 ? 'top' : (pos === 1 ? 'mid' : 'back');
+      return '<div class="cand-swipe-card ' + posClass + '" data-idx="' + idx + '">'
+        + '<div class="cc-overlay-label like">決定</div>'
+        + '<div class="cc-overlay-label nope">次へ</div>'
+        + '<div class="cc-overlay-label up">⭐ お気に入り</div>'
+        + '<div class="cc-overlay-label down">却下</div>'
+        + '<div class="cc-num">' + (idx + 1) + ' / ' + candidates.length + '</div>'
+        + '<div class="cc-name">' + (type === 'meal' ? '🍱 ' : '') + htmlEscape(name) + '</div>'
+        + '<div class="cc-meta">'
+          + '<span>⏱ ' + htmlEscape(time) + '</span>'
+          + '<span>📊 ' + htmlEscape(difficulty) + '</span>'
+          + '<span>💰 ' + htmlEscape(cost) + '</span>'
+        + '</div>'
+        + (summary ? '<div class="cc-summary">' + htmlEscape(summary) + '</div>' : '<div class="cc-summary"></div>')
+        + '<div class="cc-actions">'
+          + '<button type="button" class="cc-skip">⏭ 次の候補</button>'
+          + '<button type="button" class="cc-decide">✓ これに決定</button>'
+        + '</div>'
+      + '</div>';
+    }
+
+    function render() {
+      var topIdx = order[position];
+      var midIdx = order[(position + 1) % order.length];
+      var backIdx = order[(position + 2) % order.length];
+      var seen = {};
+      var cards = [];
+      [topIdx, midIdx, backIdx].forEach(function (i, p) {
+        if (seen[i]) return;
+        seen[i] = true;
+        cards.push(cardHtml(candidates[i], i, p));
+      });
+      var dotsHtml = '<div class="cand-dots">' + candidates.map(function (_, i) {
+        return '<span class="' + (i === order[position] ? 'active' : '') + '"></span>';
+      }).join('') + '</div>';
+      var hintsHtml = '';
+      if (!hintsShown) {
+        hintsHtml = '<div class="cand-hints" id="cand-hints">'
+          + '👉 右=決定、👈 左=次へ、👆 上=お気に入り、👇 下=却下'
+          + '<button class="hint-close" type="button" id="cand-hints-close">閉じる</button>'
+          + '</div>';
+      }
+      resultEl.innerHTML = '<div class="card">'
+        + '<div class="candidates-intro">' + htmlEscape(title) + '。スワイプまたはボタンで選択。</div>'
+        + hintsHtml
+        + dotsHtml
+        + '<div class="cand-stack" id="cand-stack">' + cards.reverse().join('') + '</div>'
+        + '<button class="candidates-cancel" id="candidates-cancel">キャンセル</button>'
+      + '</div>';
+
+      var hintsEl = document.getElementById('cand-hints-close');
+      if (hintsEl) hintsEl.addEventListener('click', function () {
+        hintsShown = true;
+        try { localStorage.setItem(HINTS_KEY, '1'); } catch (_) {}
+        var box = document.getElementById('cand-hints');
+        if (box) box.remove();
+      });
+
+      var cancelBtn = document.getElementById('candidates-cancel');
+      if (cancelBtn) cancelBtn.addEventListener('click', function () { resultEl.innerHTML = ''; });
+
+      var stack = document.getElementById('cand-stack');
+      var topCard = stack.querySelector('.cand-swipe-card.top');
+      if (!topCard) return;
+
+      // Buttons
+      topCard.querySelector('.cc-decide').addEventListener('click', function () { decide(); });
+      topCard.querySelector('.cc-skip').addEventListener('click', function () { skip(); });
+
+      // Swipe gestures
+      var sx = 0, sy = 0, dx = 0, dy = 0, tracking = false, decided = null;
+      topCard.addEventListener('touchstart', function (e) {
+        if (e.touches.length !== 1) return;
+        sx = e.touches[0].clientX; sy = e.touches[0].clientY;
+        dx = 0; dy = 0; tracking = true; decided = null;
+        topCard.style.transition = 'none';
+      }, { passive: true });
+      topCard.addEventListener('touchmove', function (e) {
+        if (!tracking) return;
+        dx = e.touches[0].clientX - sx;
+        dy = e.touches[0].clientY - sy;
+        if (decided === null && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) {
+          decided = (Math.abs(dx) > Math.abs(dy)) ? 'h' : 'v';
+        }
+        if (e.cancelable) e.preventDefault();
+        var rot = dx / 20;
+        topCard.style.transform = 'translate(' + dx + 'px, ' + dy + 'px) rotate(' + rot + 'deg)';
+        // Overlay labels
+        var like = topCard.querySelector('.cc-overlay-label.like');
+        var nope = topCard.querySelector('.cc-overlay-label.nope');
+        var up   = topCard.querySelector('.cc-overlay-label.up');
+        var down = topCard.querySelector('.cc-overlay-label.down');
+        if (decided === 'h') {
+          like.style.opacity = dx > 0 ? Math.min(1, dx / 120) : 0;
+          nope.style.opacity = dx < 0 ? Math.min(1, -dx / 120) : 0;
+          up.style.opacity = 0; down.style.opacity = 0;
+        } else if (decided === 'v') {
+          up.style.opacity = dy < 0 ? Math.min(1, -dy / 120) : 0;
+          down.style.opacity = dy > 0 ? Math.min(1, dy / 120) : 0;
+          like.style.opacity = 0; nope.style.opacity = 0;
+        }
+      }, { passive: false });
+      topCard.addEventListener('touchend', function () {
+        if (!tracking) return;
+        tracking = false;
+        topCard.style.transition = '';
+        var absX = Math.abs(dx), absY = Math.abs(dy);
+        var TH = 80;
+        if (decided === 'h' && absX > TH) {
+          if (dx > 0) fly('right', decide);
+          else fly('left', skip);
+        } else if (decided === 'v' && absY > TH) {
+          if (dy < 0) fly('up', favorite);
+          else fly('down', reject);
+        } else {
+          topCard.style.transform = '';
+          topCard.querySelectorAll('.cc-overlay-label').forEach(function (l) { l.style.opacity = 0; });
+        }
+      });
+      topCard.addEventListener('touchcancel', function () {
+        tracking = false;
+        topCard.style.transform = '';
+      });
+
+      function fly(dir, cb) {
+        window.hapticTap && window.hapticTap(18);
+        var tx = 0, ty = 0, rot = 0;
+        if (dir === 'right') { tx = window.innerWidth; rot = 20; }
+        else if (dir === 'left') { tx = -window.innerWidth; rot = -20; }
+        else if (dir === 'up') { ty = -window.innerHeight; }
+        else if (dir === 'down') { ty = window.innerHeight; }
+        topCard.style.transition = 'transform 0.35s ease, opacity 0.35s ease';
+        topCard.style.transform = 'translate(' + tx + 'px,' + ty + 'px) rotate(' + rot + 'deg)';
+        topCard.style.opacity = '0';
+        setTimeout(cb, 280);
+      }
+    }
+
+    function decide() {
+      var idx = order[position];
+      var chosen = candidates[idx];
+      if (!chosen) return;
+      if (type === 'meal') {
+        if (!chosen.type) chosen.type = 'meal';
+        renderMeal(chosen, true);
+      } else {
+        renderRecipe(chosen, true);
+      }
+    }
+    function skip() {
+      window.hapticTap && window.hapticTap(10);
+      position = (position + 1) % order.length;
+      render();
+    }
+    function favorite() {
+      var idx = order[position];
+      var chosen = candidates[idx];
+      if (chosen && typeof addFavorite === 'function') {
+        try { addFavorite(chosen); window.showSnackbar && window.showSnackbar('お気に入りに追加しました'); } catch (_) {}
+      }
+      skip();
+    }
+    function reject() {
+      var idx = order[position];
+      rejected[idx] = true;
+      // Remove from order
+      order = order.filter(function (i) { return i !== idx; });
+      if (order.length === 0) {
+        resultEl.innerHTML = '<div class="card"><div class="candidates-intro">すべての候補を却下しました。もう一度生成してください。</div><button class="candidates-cancel" id="candidates-cancel">閉じる</button></div>';
+        var cc = document.getElementById('candidates-cancel');
+        if (cc) cc.addEventListener('click', function () { resultEl.innerHTML = ''; });
+        return;
+      }
+      position = position % order.length;
+      render();
+    }
+
+    render();
+    resultEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  // --- Cooking mode enhancement: add haptic to existing swipe + visual hint ---
+  // openCookingMode is a closure; we wrap by monkey-patching via interception.
+  var origOpen = window.openCookingMode;
+  if (typeof origOpen === 'function') {
+    window.openCookingMode = function (recipe) {
+      origOpen.call(this, recipe);
+      var overlay = document.querySelector('.cooking-overlay');
+      if (!overlay) return;
+      // Add haptic on existing nav buttons
+      ['cook-prev', 'cook-next'].forEach(function (id) {
+        var b = overlay.querySelector('#' + id);
+        if (b) b.addEventListener('click', function () { window.hapticTap && window.hapticTap(15); });
+      });
+      // Swipe feedback (visual) by hooking touch events on body
+      var fbL = document.createElement('div');
+      fbL.className = 'swipe-feedback left';
+      fbL.textContent = '◀ 前';
+      var fbR = document.createElement('div');
+      fbR.className = 'swipe-feedback right';
+      fbR.textContent = '次 ▶';
+      var block = overlay.querySelector('.cooking-step-block');
+      if (block) { block.appendChild(fbL); block.appendChild(fbR); }
+
+      // Augment existing swipe with lower threshold and haptic (add second listener)
+      var sx = null, sy = null;
+      overlay.addEventListener('touchstart', function (e) {
+        sx = e.touches[0].clientX; sy = e.touches[0].clientY;
+      }, { passive: true });
+      overlay.addEventListener('touchmove', function (e) {
+        if (sx === null) return;
+        var dx = e.touches[0].clientX - sx;
+        var dy = e.touches[0].clientY - sy;
+        if (Math.abs(dx) > 20 && Math.abs(dx) > Math.abs(dy)) {
+          fbL.classList.toggle('show', dx > 30);
+          fbR.classList.toggle('show', dx < -30);
+        } else {
+          fbL.classList.remove('show'); fbR.classList.remove('show');
+        }
+      }, { passive: true });
+      overlay.addEventListener('touchend', function () {
+        sx = null; sy = null;
+        fbL.classList.remove('show'); fbR.classList.remove('show');
+        window.hapticTap && window.hapticTap(12);
+      });
+    };
+  }
 })();
 
 </script>
