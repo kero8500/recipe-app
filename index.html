@@ -1070,6 +1070,74 @@
     margin-top: 10px;
     font-family: ui-monospace, Menlo, monospace;
   }
+  /* Settings gear button in header */
+  header { position: relative; }
+  .gear-btn {
+    position: absolute;
+    top: 16px;
+    right: 0;
+    width: auto;
+    padding: 6px 10px;
+    font-size: 18px;
+    background: transparent;
+    color: #8b4513;
+    box-shadow: none;
+    border: 1.5px solid #ffd4b0;
+    border-radius: 10px;
+    font-weight: 500;
+    line-height: 1;
+  }
+  .gear-btn:active { transform: translateY(1px); box-shadow: none; }
+  /* Clear form button (secondary style) */
+  .clear-form-btn {
+    background: transparent;
+    color: #8b4513;
+    border: 1.5px solid #ffd4b0;
+    box-shadow: none;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 10px;
+    margin-bottom: 8px;
+  }
+  .clear-form-btn:active { transform: translateY(1px); box-shadow: none; }
+  /* Settings modal */
+  .settings-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 16px;
+  }
+  .settings-overlay.active { display: flex; }
+  .settings-modal {
+    background: #fff;
+    border-radius: 16px;
+    padding: 20px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  }
+  .settings-modal h2 {
+    margin: 0 0 14px;
+    color: #e8590c;
+    font-size: 18px;
+  }
+  .settings-modal .settings-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .settings-modal .settings-actions button { margin: 0; }
+  .settings-modal .btn-cancel {
+    background: transparent;
+    color: #8b4513;
+    border: 1.5px solid #ffd4b0;
+    box-shadow: none;
+  }
+  .settings-modal .btn-cancel:active { box-shadow: none; }
   /* Panels */
   .panel { display: none; }
   .panel.active { display: block; }
@@ -1081,6 +1149,7 @@
   <header>
     <h1>🍳 レシピ提案AI</h1>
     <p>あなたにぴったりのレシピをAIが考えます</p>
+    <button type="button" id="open-settings" class="gear-btn" aria-label="設定">⚙</button>
   </header>
 
   <div class="top-menu" role="tablist" aria-label="機能切替">
@@ -1102,11 +1171,32 @@
     <div class="row">
       <div class="field">
         <label for="servings">👥 人数</label>
-        <input type="text" id="servings" placeholder="2人" aria-label="人数">
+        <select id="servings" aria-label="人数">
+          <option value="1人">1人</option>
+          <option value="2人" selected>2人</option>
+          <option value="3人">3人</option>
+          <option value="4人">4人</option>
+          <option value="5人">5人</option>
+          <option value="6人">6人</option>
+          <option value="7人">7人</option>
+          <option value="8人">8人</option>
+          <option value="9人">9人</option>
+          <option value="10人">10人</option>
+        </select>
       </div>
       <div class="field">
         <label for="time">⏱ 調理時間</label>
-        <input type="text" id="time" placeholder="30分以内" aria-label="調理時間">
+        <select id="time" aria-label="調理時間">
+          <option value="5分">5分</option>
+          <option value="10分">10分</option>
+          <option value="20分">20分</option>
+          <option value="30分" selected>30分</option>
+          <option value="40分">40分</option>
+          <option value="50分">50分</option>
+          <option value="60分">60分</option>
+          <option value="90分">90分</option>
+          <option value="120分">120分</option>
+        </select>
       </div>
     </div>
     <div class="field">
@@ -1131,6 +1221,7 @@
         <div class="chip" data-val="ヘルシー" role="button" tabindex="0" aria-pressed="false">ヘルシー</div>
       </div>
     </div>
+    <button type="button" id="clear-form" class="clear-form-btn">🗑 入力をクリア</button>
     <button id="generate" aria-busy="false">おまかせでレシピを提案してもらう</button>
     <button id="generate-meal" class="btn-meal" aria-busy="false">🍱 1食分の献立を提案してもらう</button>
     <button id="generate-weekly" class="btn-weekly" aria-busy="false">📅 1週間分の献立を提案してもらう</button>
@@ -1172,6 +1263,35 @@
   <div id="favorites-container"></div>
   <div id="shopping-container"></div>
   <div id="history-container"></div>
+
+  <div id="settings-overlay" class="settings-overlay" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+    <div class="settings-modal">
+      <h2 id="settings-title">⚙ 設定</h2>
+      <div class="field">
+        <label for="default-servings">デフォルト人数</label>
+        <select id="default-servings">
+          <option value="1人">1人</option>
+          <option value="2人">2人</option>
+          <option value="3人">3人</option>
+          <option value="4人">4人</option>
+          <option value="5人">5人</option>
+          <option value="6人">6人</option>
+          <option value="7人">7人</option>
+          <option value="8人">8人</option>
+          <option value="9人">9人</option>
+          <option value="10人">10人</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="default-allergy">デフォルトのアレルギー・食の制限</label>
+        <input type="text" id="default-allergy" placeholder="例：乳製品NG">
+      </div>
+      <div class="settings-actions">
+        <button type="button" id="settings-cancel" class="btn-cancel">キャンセル</button>
+        <button type="button" id="settings-save">保存</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -1664,8 +1784,6 @@ function getChipValue(groupId) {
 function hasAnyInput() {
   if (document.getElementById('craving').value.trim()) return true;
   if (document.getElementById('ingredients').value.trim()) return true;
-  if (document.getElementById('servings').value.trim()) return true;
-  if (document.getElementById('time').value.trim()) return true;
   if (document.getElementById('allergy').value.trim()) return true;
   if (getChipValue('difficulty')) return true;
   if (getChipValue('mood')) return true;
@@ -1682,9 +1800,107 @@ function updateButtonText() {
 }
 
 // Attach input listeners for button text update
-['craving', 'ingredients', 'servings', 'time', 'allergy'].forEach(id => {
+['craving', 'ingredients', 'allergy'].forEach(id => {
   document.getElementById(id).addEventListener('input', updateButtonText);
 });
+['servings', 'time'].forEach(id => {
+  document.getElementById(id).addEventListener('change', updateButtonText);
+});
+
+// --- User preferences (default values) in localStorage ---
+const PREFS_KEY = 'recipeUserPrefs';
+const DEFAULT_SERVINGS = '2人';
+const DEFAULT_TIME = '30分';
+const DEFAULT_ALLERGY = '';
+
+function loadPrefs() {
+  try {
+    const raw = localStorage.getItem(PREFS_KEY);
+    if (!raw) return { servings: DEFAULT_SERVINGS, allergy: DEFAULT_ALLERGY };
+    const p = JSON.parse(raw);
+    return {
+      servings: (typeof p.servings === 'string' && p.servings) ? p.servings : DEFAULT_SERVINGS,
+      allergy: (typeof p.allergy === 'string') ? p.allergy : DEFAULT_ALLERGY,
+    };
+  } catch {
+    return { servings: DEFAULT_SERVINGS, allergy: DEFAULT_ALLERGY };
+  }
+}
+
+function savePrefs(prefs) {
+  try {
+    localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
+  } catch {}
+}
+
+// Apply saved defaults to form on page load
+(function applyDefaultsOnLoad() {
+  const prefs = loadPrefs();
+  const servingsEl = document.getElementById('servings');
+  // Only set if the option exists
+  if ([...servingsEl.options].some(o => o.value === prefs.servings)) {
+    servingsEl.value = prefs.servings;
+  }
+  document.getElementById('allergy').value = prefs.allergy || '';
+})();
+
+// Settings modal wiring
+(function setupSettings() {
+  const overlay = document.getElementById('settings-overlay');
+  const openBtn = document.getElementById('open-settings');
+  const cancelBtn = document.getElementById('settings-cancel');
+  const saveBtn = document.getElementById('settings-save');
+  const servingsSel = document.getElementById('default-servings');
+  const allergyInput = document.getElementById('default-allergy');
+
+  function openModal() {
+    const prefs = loadPrefs();
+    servingsSel.value = [...servingsSel.options].some(o => o.value === prefs.servings) ? prefs.servings : DEFAULT_SERVINGS;
+    allergyInput.value = prefs.allergy || '';
+    overlay.classList.add('active');
+  }
+  function closeModal() { overlay.classList.remove('active'); }
+
+  openBtn.addEventListener('click', openModal);
+  cancelBtn.addEventListener('click', closeModal);
+  saveBtn.addEventListener('click', () => {
+    savePrefs({
+      servings: servingsSel.value || DEFAULT_SERVINGS,
+      allergy: (allergyInput.value || '').trim(),
+    });
+    closeModal();
+  });
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closeModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && overlay.classList.contains('active')) closeModal();
+  });
+})();
+
+// Clear form button
+(function setupClearForm() {
+  const btn = document.getElementById('clear-form');
+  btn.addEventListener('click', () => {
+    const prefs = loadPrefs();
+    document.getElementById('craving').value = '';
+    document.getElementById('ingredients').value = '';
+    document.getElementById('allergy').value = '';
+    // Reset servings/time to saved defaults (fallback to built-ins)
+    const servingsEl = document.getElementById('servings');
+    servingsEl.value = [...servingsEl.options].some(o => o.value === prefs.servings) ? prefs.servings : DEFAULT_SERVINGS;
+    const timeEl = document.getElementById('time');
+    timeEl.value = [...timeEl.options].some(o => o.value === DEFAULT_TIME) ? DEFAULT_TIME : timeEl.options[0].value;
+    // Clear chips
+    ['difficulty', 'mood'].forEach(groupId => {
+      document.querySelectorAll('#' + groupId + ' .chip').forEach(c => {
+        c.classList.remove('active');
+        c.setAttribute('aria-pressed', 'false');
+      });
+    });
+    updateButtonText();
+  });
+})();
 
 function buildPrompt() {
   const data = {
