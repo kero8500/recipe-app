@@ -1908,6 +1908,260 @@
   .cooking-overlay .swipe-feedback.show { opacity: 1; }
   .cooking-overlay .swipe-feedback.left { left: 16px; }
   .cooking-overlay .swipe-feedback.right { right: 16px; }
+
+  /* ===================================================== */
+  /* === Phase A: Design Refresh (variables / typography / tap targets / tabbar / skeleton / toast) === */
+  /* ===================================================== */
+  :root {
+    --fs-body: 15px;
+    --fs-label: 14px;
+    --fs-meta: 13px;
+    --fs-small: 12px;
+    --tap-min: 48px;
+    --color-text: #2a2a2a;
+    --color-muted: #6b4423;       /* 薄背景でも十分なコントラスト */
+    --color-muted-strong: #5a3a1e; /* #8b4513 を淡色背景に対し底上げ */
+    --color-brand: #e8590c;
+    --color-brand-light: #ff8c42;
+    --tabbar-h: 64px;
+    --tabbar-safe: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px));
+    --sticky-cta-h: 72px;
+  }
+
+  /* A-1: 本文フォント底上げ（下位要素の 13/12px を 15/13px へ） */
+  body { font-size: var(--fs-body); color: var(--color-text); }
+  label { font-size: var(--fs-label); color: var(--color-muted-strong); }
+
+  /* 主要な 14px テキストを 15px に（リスト・手順は可読性優先） */
+  ul.ing li { font-size: var(--fs-body); }
+  ol.steps li { font-size: var(--fs-body); line-height: 1.65; }
+
+  /* メタ情報（バッジ・日付等）は 12px -> 13px */
+  .meta span { font-size: var(--fs-meta); padding: 5px 11px; }
+  .history-item .history-name { font-size: var(--fs-body); }
+  .history-item .history-date { font-size: var(--fs-meta); color: var(--color-muted); }
+  .history-section .section-header h3,
+  .favorites-section .section-header h3,
+  .shopping-section .section-header h3 { font-size: 17px; color: var(--color-muted-strong); }
+  .tip { font-size: var(--fs-meta); color: #4a2f15; }
+  .remix-hint { font-size: var(--fs-meta); color: var(--color-muted-strong); }
+  .apikey-note { font-size: var(--fs-meta); color: var(--color-muted-strong); }
+  .nutri .label { font-size: 11px; color: var(--color-muted-strong); }
+  .nutri .val { font-size: var(--fs-label); }
+  header p { font-size: var(--fs-meta); color: var(--color-muted-strong); }
+
+  /* A-1: タップ領域 48px 統一（小さい補助ボタンを底上げ） */
+  .history-clear-btn,
+  .shop-clear-btn,
+  .shop-clear-checked-btn,
+  .fav-clear-btn,
+  .fridge-delete-btn,
+  .retry-btn {
+    min-height: var(--tap-min);
+    padding: 10px 16px;
+    font-size: var(--fs-meta);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .fridge-add-row > button,
+  #fridge-add {
+    min-height: var(--tap-min);
+    font-size: var(--fs-label) !important;
+    padding: 10px 18px !important;
+  }
+  .chip {
+    min-height: var(--tap-min);
+    padding: 10px 16px;
+    font-size: var(--fs-label);
+    display: inline-flex;
+    align-items: center;
+  }
+  .shop-item-check {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    position: relative;
+  }
+  /* チェックボックス親ラッパでタップ領域を 48px に拡張 */
+  .shop-item {
+    min-height: var(--tap-min);
+    padding: 10px 12px;
+  }
+  .history-item { min-height: var(--tap-min); padding: 12px; }
+  .fridge-item { min-height: var(--tap-min); padding: 10px 4px; font-size: var(--fs-label); }
+  .fridge-badge { font-size: var(--fs-small); padding: 4px 10px; }
+
+  /* favorite / shopping / fav-btn: 高さ48px確保 */
+  .fav-btn, .shop-add-btn {
+    min-height: var(--tap-min);
+    padding: 10px 18px;
+    font-size: var(--fs-label);
+  }
+
+  /* ヘッダー歯車ボタン（下部タブに移設後も安全のため担保） */
+  .gear-btn {
+    min-width: var(--tap-min);
+    min-height: var(--tap-min);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* top-menu button 可読性 (セグメントコントロール化準備) */
+  .top-menu button {
+    min-height: var(--tap-min);
+    font-size: var(--fs-label);
+    padding: 12px 10px;
+  }
+
+  /* A-1: コントラスト改善 - 淡色背景上の #8b4513 を強化 */
+  .history-item .history-date,
+  .nutri .label,
+  .remix-hint,
+  .apikey-note { font-weight: 500; }
+
+  /* ===================================================== */
+  /* A-2: Skeleton loading                                  */
+  /* ===================================================== */
+  .skeleton-candidates {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .skeleton-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(232, 89, 12, 0.08);
+    border: 1.5px solid #ffe8d6;
+  }
+  .skeleton-line {
+    height: 14px;
+    border-radius: 7px;
+    background: linear-gradient(90deg, #f2ddc6 0%, #fff3e6 50%, #f2ddc6 100%);
+    background-size: 200% 100%;
+    animation: skeletonShimmer 1.3s linear infinite;
+    margin-bottom: 10px;
+  }
+  .skeleton-line.title { height: 22px; width: 65%; }
+  .skeleton-line.meta { height: 14px; width: 80%; }
+  .skeleton-line.summary { height: 12px; width: 100%; }
+  .skeleton-line.summary.short { width: 70%; margin-bottom: 0; }
+  @keyframes skeletonShimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+  .skeleton-intro {
+    font-size: var(--fs-meta);
+    color: var(--color-muted-strong);
+    margin-bottom: 10px;
+    text-align: center;
+  }
+
+  /* ===================================================== */
+  /* A-2: Toast (success variant) - reuse #undo-snackbar    */
+  /* ===================================================== */
+  #undo-snackbar.toast-success {
+    background: #2e7d32;
+  }
+  #undo-snackbar.toast-info {
+    background: #37474f;
+  }
+  #undo-snackbar .sb-msg { font-size: var(--fs-label); }
+
+  /* ===================================================== */
+  /* #1: Bottom Tab Bar                                     */
+  /* ===================================================== */
+  .bottom-tabbar {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: 900;
+    display: flex;
+    align-items: stretch;
+    justify-content: space-around;
+    background: rgba(255, 255, 255, 0.98);
+    border-top: 1px solid #ffd4b0;
+    box-shadow: 0 -2px 10px rgba(139, 69, 19, 0.08);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .bottom-tabbar .tab {
+    flex: 1 1 0;
+    min-height: var(--tabbar-h);
+    min-width: var(--tap-min);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 6px 2px;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    color: var(--color-muted-strong);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: none;
+    position: relative;
+    line-height: 1.15;
+  }
+  .bottom-tabbar .tab .tab-icon {
+    font-size: 22px;
+    line-height: 1;
+    filter: grayscale(0.15);
+    opacity: 0.75;
+  }
+  .bottom-tabbar .tab .tab-label {
+    font-size: 11px;
+    letter-spacing: 0.02em;
+  }
+  .bottom-tabbar .tab.active {
+    color: var(--color-brand);
+  }
+  .bottom-tabbar .tab.active .tab-icon {
+    filter: none;
+    opacity: 1;
+    transform: translateY(-1px);
+  }
+  .bottom-tabbar .tab.active::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 28%; right: 28%;
+    height: 3px;
+    background: var(--color-brand);
+    border-radius: 0 0 3px 3px;
+  }
+  .bottom-tabbar .tab:active {
+    background: rgba(232, 89, 12, 0.08);
+  }
+
+  /* tabbar 分のボディ余白（コンテンツが隠れないように） */
+  body { padding-bottom: var(--tabbar-safe); }
+  /* Sticky CTA ありの場合は CTA(約 72px) + tabbar 分を確保 */
+  body.has-sticky-cta {
+    padding-bottom: calc(var(--sticky-cta-h) + var(--tabbar-safe));
+  }
+  /* Sticky CTA を tabbar の直上へ */
+  #mobile-cta-bar {
+    bottom: var(--tabbar-safe);
+    padding: 10px 12px !important;
+  }
+  /* Snackbar を CTA + tabbar の上へ */
+  #undo-snackbar {
+    bottom: calc(var(--sticky-cta-h) + var(--tabbar-safe) + 8px);
+  }
+
+  /* パネル切替 (ホームタブ内セグメント) */
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ヘッダーのミニマル化（歯車は下部タブへ移動） */
+  header .gear-btn { display: none; }
+  header { padding: 18px 0 10px; }
+  header h1 { font-size: 22px; }
 </style>
 </head>
 <body>
@@ -1918,10 +2172,9 @@
     <button type="button" id="open-settings" class="gear-btn" aria-label="設定">⚙</button>
   </header>
 
-  <div class="top-menu" role="tablist" aria-label="機能切替">
+  <div class="top-menu" role="tablist" aria-label="機能切替" data-home-segment>
     <button type="button" data-panel="panel-recipe" class="active" role="tab">🍳 レシピ</button>
     <button type="button" data-panel="panel-remix" role="tab">🥡 リメイク</button>
-    <button type="button" data-panel="panel-fridge" role="tab">🧊 冷蔵庫</button>
   </div>
 
   <div id="panel-recipe" class="panel active">
@@ -2059,6 +2312,24 @@
     </div>
   </div>
 </div>
+
+<nav class="bottom-tabbar" role="tablist" aria-label="メインナビゲーション">
+  <button type="button" class="tab active" data-tab="home" role="tab" aria-selected="true">
+    <span class="tab-icon" aria-hidden="true">🍳</span><span class="tab-label">ホーム</span>
+  </button>
+  <button type="button" class="tab" data-tab="fridge" role="tab" aria-selected="false">
+    <span class="tab-icon" aria-hidden="true">🧊</span><span class="tab-label">冷蔵庫</span>
+  </button>
+  <button type="button" class="tab" data-tab="shopping" role="tab" aria-selected="false">
+    <span class="tab-icon" aria-hidden="true">🛒</span><span class="tab-label">買い物</span>
+  </button>
+  <button type="button" class="tab" data-tab="favorites" role="tab" aria-selected="false">
+    <span class="tab-icon" aria-hidden="true">⭐</span><span class="tab-label">お気に入り</span>
+  </button>
+  <button type="button" class="tab" data-tab="settings" role="tab" aria-selected="false">
+    <span class="tab-icon" aria-hidden="true">⚙️</span><span class="tab-label">設定</span>
+  </button>
+</nav>
 
 <script>
 // #12: Service Worker registration (inline via Blob URL for single-file architecture)
@@ -2377,6 +2648,11 @@ function addIngredientsToShoppingList(recipe) {
 
   saveShoppingList(list);
   renderShoppingList();
+  try {
+    if (addedCount > 0 && typeof window.showToast === 'function') {
+      window.showToast('🛒 買い物リストに追加しました（' + addedCount + '件）', { variant: 'success', duration: 2400 });
+    }
+  } catch (_) {}
   return addedCount;
 }
 
@@ -5416,7 +5692,7 @@ renderFridge();
       var idx = order[position];
       var chosen = candidates[idx];
       if (chosen && typeof addFavorite === 'function') {
-        try { addFavorite(chosen); window.showSnackbar && window.showSnackbar('お気に入りに追加しました'); } catch (_) {}
+        try { addFavorite(chosen); } catch (_) {}
       }
       skip();
     }
@@ -5484,6 +5760,310 @@ renderFridge();
         window.hapticTap && window.hapticTap(12);
       });
     };
+  }
+})();
+
+
+/* ============================================================
+ * === Phase A: Bottom tab navigation + toast helper + skeleton
+ * ============================================================ */
+(function () {
+  'use strict';
+
+  // ---- Bottom tab navigation ----
+  var tabbar = document.querySelector('.bottom-tabbar');
+  if (!tabbar) return;
+
+  // 各タブに対応する表示要素グループを定義
+  // ホーム = top-menu + panel-recipe + panel-remix + result
+  // 冷蔵庫 = panel-fridge
+  // 買い物 = shopping-container
+  // お気に入り = favorites-container + history-container
+  // 設定 = 設定モーダルを開く（タブのactive切替は行わない）
+  var TAB_GROUPS = {
+    home: ['.top-menu', '#panel-recipe', '#panel-remix', '#result'],
+    fridge: ['#panel-fridge'],
+    shopping: ['#shopping-container'],
+    favorites: ['#favorites-container', '#history-container'],
+  };
+
+  // お気に入りタブや買い物タブでも空の時でも見栄えが良いよう、空時メッセージを表示する
+  function ensureEmptyHint(containerId, emptyHtml) {
+    var el = document.getElementById(containerId);
+    if (!el) return;
+    if (!el.innerHTML.trim()) {
+      el.innerHTML = emptyHtml;
+    }
+  }
+
+  function hideAll() {
+    Object.keys(TAB_GROUPS).forEach(function (key) {
+      TAB_GROUPS[key].forEach(function (sel) {
+        document.querySelectorAll(sel).forEach(function (el) {
+          el.setAttribute('data-tab-hidden', 'true');
+          el.style.display = 'none';
+        });
+      });
+    });
+  }
+
+  function showGroup(key) {
+    var sels = TAB_GROUPS[key] || [];
+    sels.forEach(function (sel) {
+      document.querySelectorAll(sel).forEach(function (el) {
+        el.removeAttribute('data-tab-hidden');
+        el.style.display = '';
+      });
+    });
+  }
+
+  function activateTab(tabName) {
+    if (tabName === 'settings') {
+      // 設定は overlay を開くだけ。タブの active は元のまま維持
+      var openBtn = document.getElementById('open-settings');
+      if (openBtn) openBtn.click();
+      else {
+        var overlay = document.getElementById('settings-overlay');
+        if (overlay) overlay.classList.add('active');
+      }
+      return;
+    }
+
+    hideAll();
+    showGroup(tabName);
+
+    tabbar.querySelectorAll('.tab').forEach(function (b) {
+      var active = b.dataset.tab === tabName;
+      b.classList.toggle('active', active);
+      b.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+
+    if (tabName === 'fridge' && typeof window.renderFridge === 'function') {
+      try { window.renderFridge(); } catch (_) {}
+    }
+    if (tabName === 'favorites' && typeof window.renderFavorites === 'function') {
+      try { window.renderFavorites(); } catch (_) {}
+      try { window.renderHistory && window.renderHistory(); } catch (_) {}
+    }
+    if (tabName === 'shopping' && typeof window.renderShoppingList === 'function') {
+      try { window.renderShoppingList(); } catch (_) {}
+    }
+
+    // 空時のヒント表示（お気に入り・買い物のコンテナが空のとき）
+    if (tabName === 'favorites') {
+      var favEl = document.getElementById('favorites-container');
+      var histEl = document.getElementById('history-container');
+      if (favEl && !favEl.innerHTML.trim()) {
+        favEl.innerHTML = '<div class="card"><div style="padding:20px;text-align:center;color:#6b4423;font-size:15px;">⭐ お気に入りはまだありません。<br><span style="font-size:13px;">レシピ画面でハートを押すと保存されます。</span></div></div>';
+      }
+      if (histEl && !histEl.innerHTML.trim()) {
+        histEl.innerHTML = '<div class="card"><div style="padding:16px;text-align:center;color:#6b4423;font-size:13px;">履歴はまだありません。</div></div>';
+      }
+    }
+    if (tabName === 'shopping') {
+      var shopEl = document.getElementById('shopping-container');
+      if (shopEl && !shopEl.innerHTML.trim()) {
+        shopEl.innerHTML = '<div class="card"><div style="padding:20px;text-align:center;color:#6b4423;font-size:15px;">🛒 買い物リストは空です。<br><span style="font-size:13px;">レシピから食材を追加できます。</span></div></div>';
+      }
+    }
+
+    // スクロールをトップへ（モバイルアプリ標準動作）
+    try { window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' }); } catch (_) { window.scrollTo(0, 0); }
+  }
+
+  tabbar.addEventListener('click', function (e) {
+    var btn = e.target.closest('.tab');
+    if (!btn) return;
+    activateTab(btn.dataset.tab);
+  });
+
+  // 初期: ホームタブを有効化（冷蔵庫・買い物・お気に入り・履歴を非表示）
+  // ただし最初は panel-fridge などが既に DOM にあるので隠す
+  ['#panel-fridge', '#favorites-container', '#shopping-container', '#history-container']
+    .forEach(function (sel) {
+      document.querySelectorAll(sel).forEach(function (el) { el.style.display = 'none'; });
+    });
+
+  // レシピ生成後に結果が表示されるが、「ホームタブ以外」を見ているときに自動でホームへ戻すのは避ける。
+  // ただし、お気に入り追加などで既存のrender関数が呼ばれたとき、該当タブが見えていなければ非表示を維持する。
+  function reHideIfInactive() {
+    var activeTab = tabbar.querySelector('.tab.active');
+    var tabName = activeTab ? activeTab.dataset.tab : 'home';
+    if (tabName !== 'favorites') {
+      var f = document.getElementById('favorites-container');
+      var h = document.getElementById('history-container');
+      if (f) f.style.display = 'none';
+      if (h) h.style.display = 'none';
+    }
+    if (tabName !== 'shopping') {
+      var s = document.getElementById('shopping-container');
+      if (s) s.style.display = 'none';
+    }
+    if (tabName !== 'fridge') {
+      var fr = document.getElementById('panel-fridge');
+      if (fr) fr.style.display = 'none';
+    }
+  }
+
+  // 既存のrender関数をラップ
+  ['renderFavorites', 'renderShoppingList', 'renderHistory', 'renderFridge'].forEach(function (fname) {
+    var orig = window[fname];
+    if (typeof orig !== 'function') return;
+    window[fname] = function () {
+      var r = orig.apply(this, arguments);
+      try { reHideIfInactive(); } catch (_) {}
+      return r;
+    };
+  });
+
+  // レシピ生成ボタンが押されたら強制的にホームタブへ切替
+  ['generate', 'generate-meal', 'generate-weekly', 'generate-remix', 'fridge-use'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('click', function () {
+      var active = tabbar.querySelector('.tab.active');
+      if (!active || active.dataset.tab !== 'home') {
+        activateTab('home');
+      }
+    }, true); // capture: 他のhandlerより先に実行
+  });
+
+  window.__activateTab = activateTab;
+})();
+
+/* ============================================================
+ * === Toast helper (showToast) - reuse showSnackbar
+ * ============================================================ */
+(function () {
+  'use strict';
+  // showToast(message, {variant: 'success'|'info'|'default', duration: ms})
+  window.showToast = function (message, opts) {
+    opts = opts || {};
+    var duration = typeof opts.duration === 'number' ? opts.duration : 2500;
+    var variant = opts.variant || 'success';
+
+    // 既存 showSnackbar を流用（action 無しでタイマー経過→自動消滅）
+    if (typeof window.showSnackbar !== 'function') {
+      // フォールバック: なにもしない
+      return;
+    }
+    window.showSnackbar(message, {
+      duration: duration,
+    });
+
+    // snackbar要素に variant クラスを一時付与
+    var sb = document.getElementById('undo-snackbar');
+    if (!sb) return;
+    sb.classList.remove('toast-success', 'toast-info');
+    if (variant === 'success') sb.classList.add('toast-success');
+    else if (variant === 'info') sb.classList.add('toast-info');
+
+    // duration 経過後にクラス削除
+    setTimeout(function () {
+      if (sb) {
+        sb.classList.remove('toast-success', 'toast-info');
+      }
+    }, duration + 400);
+  };
+
+  // 既存のお気に入り・買い物・冷蔵庫・設定アクションにトーストを追加
+  // 既存の showSnackbar 呼び出しがない箇所にフックする
+  document.addEventListener('DOMContentLoaded', function () {
+    hookToasts();
+  });
+  if (document.readyState !== 'loading') {
+    hookToasts();
+  }
+
+  function hookToasts() {
+    // 設定保存
+    var saveBtn = document.getElementById('settings-save');
+    if (saveBtn && !saveBtn.__toastHooked) {
+      saveBtn.__toastHooked = true;
+      saveBtn.addEventListener('click', function () {
+        setTimeout(function () {
+          window.showToast('⚙️ 設定を保存しました', { variant: 'success', duration: 2200 });
+        }, 50);
+      });
+    }
+    // 冷蔵庫 追加
+    var fridgeAdd = document.getElementById('fridge-add');
+    if (fridgeAdd && !fridgeAdd.__toastHooked) {
+      fridgeAdd.__toastHooked = true;
+      fridgeAdd.addEventListener('click', function () {
+        var nameEl = document.getElementById('fridge-name');
+        var n = nameEl && nameEl.value && nameEl.value.trim();
+        setTimeout(function () {
+          // 追加成功時のみトースト（上限時は alert が先に出ている）
+          if (n) {
+            window.showToast('🧊 冷蔵庫に追加しました', { variant: 'success', duration: 2000 });
+          }
+        }, 80);
+      });
+    }
+  }
+
+  // 既存の addFavorite / addToShoppingList などをラップしてトースト表示
+  function wrapAddFavorite() {
+    if (typeof window.addFavorite !== 'function' || window.addFavorite.__toastWrapped) return;
+    var orig = window.addFavorite;
+    window.addFavorite = function (recipe) {
+      var r = orig.apply(this, arguments);
+      try { window.showToast('⭐ お気に入りに追加しました', { variant: 'success', duration: 2200 }); } catch (_) {}
+      return r;
+    };
+    window.addFavorite.__toastWrapped = true;
+  }
+
+  // ShoppingList 追加系はコード内で直接 push しているケースが多いので、
+  // saveShoppingList 呼び出し回数の増加を検知するより、主要な UI フック箇所で showToast を明示呼び出し。
+  // ここでは saveShoppingList のラップは避け、既存 showSnackbar 呼び出しがない操作のみ拾う。
+
+  // 初期化を遅延（他の定義が済んだ後）
+  setTimeout(wrapAddFavorite, 0);
+})();
+
+/* ============================================================
+ * === Skeleton loading for recipe/meal candidate generation
+ * ============================================================ */
+(function () {
+  'use strict';
+
+  function buildSkeletonHtml(label) {
+    var card = '<div class="skeleton-card">' +
+      '<div class="skeleton-line title"></div>' +
+      '<div class="skeleton-line meta"></div>' +
+      '<div class="skeleton-line summary"></div>' +
+      '<div class="skeleton-line summary short"></div>' +
+      '</div>';
+    return '<div class="card">' +
+      '<div class="skeleton-intro">' + label + '</div>' +
+      '<div class="skeleton-candidates">' + card + card + card + '</div>' +
+      '</div>';
+  }
+
+  // #result を監視し、ローディング表示（「3つのレシピ候補を考えています...」「3つの献立候補を考えています...」）をスケルトンに差し替える
+  function upgradeLoading() {
+    var result = document.getElementById('result');
+    if (!result) return;
+    // 内部の .loading テキストからタイプを判別
+    var loading = result.querySelector('.loading');
+    if (!loading) return;
+    var txt = (loading.textContent || '').trim();
+    var isRecipe = txt.indexOf('レシピ候補') !== -1;
+    var isMeal = txt.indexOf('献立候補') !== -1;
+    if (!isRecipe && !isMeal) return;
+    var label = isMeal ? '3つの献立候補を考えています…' : '3つのレシピ候補を考えています…';
+    result.innerHTML = buildSkeletonHtml(label);
+  }
+
+  // #result の mutation を監視
+  var result = document.getElementById('result');
+  if (result && 'MutationObserver' in window) {
+    var obs = new MutationObserver(function () {
+      upgradeLoading();
+    });
+    obs.observe(result, { childList: true, subtree: true });
   }
 })();
 
