@@ -87,6 +87,11 @@
   }
   button:active { transform: translateY(1px); box-shadow: 0 2px 6px rgba(232, 89, 12, 0.3); }
   button:disabled { opacity: 0.6; cursor: not-allowed; }
+  /* #13: Cancel state button style */
+  button.cancel-state {
+    background: linear-gradient(135deg, #9ca3af, #6b7280);
+    box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);
+  }
   .chips { display: flex; flex-wrap: wrap; gap: 6px; }
   .chip {
     padding: 6px 12px;
@@ -246,8 +251,42 @@
     white-space: nowrap;
     margin-left: 12px;
   }
-  @media (max-width: 380px) {
+
+  /* #14: Small smartphone (max-width: 480px) */
+  @media (max-width: 480px) {
+    header h1 { font-size: 22px; }
+    header p { font-size: 12px; }
+    .card { padding: 14px; }
+    .recipe h2 { font-size: 20px; }
+    .section-title { font-size: 14px; }
     .nutri { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  /* #14: Very small smartphone (max-width: 380px) */
+  @media (max-width: 380px) {
+    header h1 { font-size: 20px; }
+    .wrap { padding: 10px; }
+    .card { padding: 12px; }
+    .nutri { grid-template-columns: repeat(3, 1fr); }
+    ul.ing li { font-size: 13px; }
+    ol.steps li { font-size: 13px; }
+  }
+
+  /* #14: PC / tablet (min-width: 641px) */
+  @media (min-width: 641px) {
+    .wrap { max-width: 720px; padding: 24px; }
+    header { padding: 28px 0 16px; }
+    header h1 { font-size: 28px; }
+    header p { font-size: 14px; }
+    .card { padding: 24px; margin-bottom: 20px; border-radius: 20px; }
+    .field { margin-bottom: 18px; }
+    input[type="text"], textarea, select { padding: 12px 14px; }
+    button { padding: 16px; font-size: 17px; }
+    .recipe h2 { font-size: 26px; }
+    .section-title { font-size: 16px; }
+    .nutri { gap: 10px; }
+    .nutri div { padding: 12px 6px; }
+    .nutri .val { font-size: 15px; }
   }
 </style>
 </head>
@@ -260,55 +299,106 @@
 
   <div class="card">
     <div class="field">
-      <label>🍽 食べたいもの・料理のイメージ</label>
-      <input type="text" id="craving" placeholder="例：さっぱりした和食">
+      <label for="craving">🍽 食べたいもの・料理のイメージ</label>
+      <input type="text" id="craving" placeholder="例：さっぱりした和食" aria-label="食べたいもの・料理のイメージ">
     </div>
     <div class="field">
-      <label>🥬 冷蔵庫にある食材</label>
-      <textarea id="ingredients" placeholder="例：鶏肉、玉ねぎ、卵"></textarea>
+      <label for="ingredients">🥬 冷蔵庫にある食材</label>
+      <textarea id="ingredients" placeholder="例：鶏肉、玉ねぎ、卵" aria-label="冷蔵庫にある食材"></textarea>
     </div>
     <div class="row">
       <div class="field">
-        <label>👥 人数</label>
-        <input type="text" id="servings" placeholder="2人">
+        <label for="servings">👥 人数</label>
+        <input type="text" id="servings" placeholder="2人" aria-label="人数">
       </div>
       <div class="field">
-        <label>⏱ 調理時間</label>
-        <input type="text" id="time" placeholder="30分以内">
+        <label for="time">⏱ 調理時間</label>
+        <input type="text" id="time" placeholder="30分以内" aria-label="調理時間">
       </div>
     </div>
     <div class="field">
-      <label>⚠️ 食の制限・アレルギー</label>
-      <input type="text" id="allergy" placeholder="例：乳製品NG">
+      <label for="allergy">⚠️ 食の制限・アレルギー</label>
+      <input type="text" id="allergy" placeholder="例：乳製品NG" aria-label="食の制限・アレルギー">
     </div>
     <div class="field">
-      <label>📊 難易度</label>
-      <div class="chips" id="difficulty">
-        <div class="chip" data-val="簡単">簡単</div>
-        <div class="chip" data-val="普通">普通</div>
-        <div class="chip" data-val="本格的">本格的</div>
+      <label id="difficulty-label">📊 難易度</label>
+      <div class="chips" id="difficulty" role="group" aria-labelledby="difficulty-label">
+        <div class="chip" data-val="簡単" role="button" tabindex="0" aria-pressed="false">簡単</div>
+        <div class="chip" data-val="普通" role="button" tabindex="0" aria-pressed="false">普通</div>
+        <div class="chip" data-val="本格的" role="button" tabindex="0" aria-pressed="false">本格的</div>
       </div>
     </div>
     <div class="field">
-      <label>✨ 気分・シーン</label>
-      <div class="chips" id="mood">
-        <div class="chip" data-val="節約">節約</div>
-        <div class="chip" data-val="ダイエット">ダイエット</div>
-        <div class="chip" data-val="がっつり">がっつり</div>
-        <div class="chip" data-val="おもてなし">おもてなし</div>
-        <div class="chip" data-val="ヘルシー">ヘルシー</div>
+      <label id="mood-label">✨ 気分・シーン</label>
+      <div class="chips" id="mood" role="group" aria-labelledby="mood-label">
+        <div class="chip" data-val="節約" role="button" tabindex="0" aria-pressed="false">節約</div>
+        <div class="chip" data-val="ダイエット" role="button" tabindex="0" aria-pressed="false">ダイエット</div>
+        <div class="chip" data-val="がっつり" role="button" tabindex="0" aria-pressed="false">がっつり</div>
+        <div class="chip" data-val="おもてなし" role="button" tabindex="0" aria-pressed="false">おもてなし</div>
+        <div class="chip" data-val="ヘルシー" role="button" tabindex="0" aria-pressed="false">ヘルシー</div>
       </div>
     </div>
-    <button id="generate">おまかせでレシピを提案してもらう</button>
+    <button id="generate" aria-busy="false">おまかせでレシピを提案してもらう</button>
   </div>
 
-  <div id="result"></div>
+  <!-- #15: aria-live for screen reader updates -->
+  <div id="result" aria-live="polite"></div>
   <div id="history-container"></div>
 </div>
 
 <script>
-// Workers API エンドポイント（デプロイ後に書き換え）
+// #12: Service Worker registration (inline via Blob URL for single-file architecture)
+if ('serviceWorker' in navigator) {
+  const swCode = `
+    const CACHE_NAME = 'recipe-ai-v1';
+    const STATIC_ASSETS = ['/'];
+
+    self.addEventListener('install', (event) => {
+      event.waitUntil(
+        caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
+      );
+      self.skipWaiting();
+    });
+
+    self.addEventListener('activate', (event) => {
+      event.waitUntil(
+        caches.keys().then((keys) =>
+          Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
+        )
+      );
+      self.clients.claim();
+    });
+
+    self.addEventListener('fetch', (event) => {
+      const url = new URL(event.request.url);
+
+      // Do not cache API requests
+      if (url.origin !== self.location.origin) return;
+
+      // Network First strategy
+      event.respondWith(
+        fetch(event.request)
+          .then((response) => {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+            return response;
+          })
+          .catch(() => caches.match(event.request))
+      );
+    });
+  `;
+  const blob = new Blob([swCode], { type: 'application/javascript' });
+  const swUrl = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(swUrl).catch(() => {
+    // Service Worker registration failed silently (e.g., non-HTTPS context)
+  });
+}
+
+// Workers API endpoint
 const API_URL = 'https://recipe-api.kero-recipe.workers.dev';
+
+// #13: AbortController for cancel functionality
+let currentAbortController = null;
 
 // --- #8: History management ---
 const HISTORY_KEY = 'recipeHistory';
@@ -382,15 +472,34 @@ function renderHistory() {
   });
 }
 
-// チップ選択（単一選択）
+// #15: Chip toggle with aria-pressed update
+function toggleChip(chip, group) {
+  const wasActive = chip.classList.contains('active');
+  group.querySelectorAll('.chip').forEach(c => {
+    c.classList.remove('active');
+    c.setAttribute('aria-pressed', 'false');
+  });
+  if (!wasActive) {
+    chip.classList.add('active');
+    chip.setAttribute('aria-pressed', 'true');
+  }
+  updateButtonText();
+}
+
+// Chip selection (single select) with keyboard support (#15)
 function setupChips(groupId) {
   const group = document.getElementById(groupId);
   group.addEventListener('click', (e) => {
     if (!e.target.classList.contains('chip')) return;
-    const wasActive = e.target.classList.contains('active');
-    group.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-    if (!wasActive) e.target.classList.add('active');
-    updateButtonText();
+    toggleChip(e.target, group);
+  });
+  // #15: Keyboard support for chips (Enter / Space)
+  group.addEventListener('keydown', (e) => {
+    if (!e.target.classList.contains('chip')) return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      toggleChip(e.target, group);
+    }
   });
 }
 setupChips('difficulty');
@@ -415,7 +524,8 @@ function hasAnyInput() {
 
 function updateButtonText() {
   const btn = document.getElementById('generate');
-  if (btn.disabled) return;
+  if (btn.disabled && !btn.classList.contains('cancel-state')) return;
+  if (btn.classList.contains('cancel-state')) return;
   btn.textContent = hasAnyInput()
     ? 'レシピを提案してもらう'
     : 'おまかせでレシピを提案してもらう';
@@ -479,7 +589,19 @@ async function generateRecipe() {
   const resultEl = document.getElementById('result');
   const btn = document.getElementById('generate');
 
-  btn.disabled = true;
+  // #13: If currently loading, cancel the request
+  if (currentAbortController) {
+    currentAbortController.abort();
+    return;
+  }
+
+  // #13: Create AbortController for this request
+  currentAbortController = new AbortController();
+
+  btn.disabled = false;
+  btn.textContent = 'キャンセル';
+  btn.classList.add('cancel-state');
+  btn.setAttribute('aria-busy', 'true');
   resultEl.innerHTML = '<div class="card"><div class="loading"><div class="spinner"></div><div>レシピを考えています...</div></div></div>';
 
   try {
@@ -487,6 +609,7 @@ async function generateRecipe() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt: buildPrompt() }),
+      signal: currentAbortController.signal,
     });
 
     if (!res.ok) {
@@ -508,10 +631,18 @@ async function generateRecipe() {
     }
     renderRecipe(recipe, true);
   } catch (e) {
-    // #6: Show retry button on error
-    resultEl.innerHTML = `<div class="card"><div class="error">${escapeHtml(e.message)}<br><button class="retry-btn" onclick="generateRecipe()">再試行</button></div></div>`;
+    // #13: Handle abort (cancel)
+    if (e.name === 'AbortError') {
+      resultEl.innerHTML = '<div class="card"><div class="error">リクエストをキャンセルしました。</div></div>';
+    } else {
+      // #6: Show retry button on error
+      resultEl.innerHTML = `<div class="card"><div class="error">${escapeHtml(e.message)}<br><button class="retry-btn" onclick="generateRecipe()">再試行</button></div></div>`;
+    }
   } finally {
+    currentAbortController = null;
+    btn.classList.remove('cancel-state');
     btn.disabled = false;
+    btn.setAttribute('aria-busy', 'false');
     updateButtonText();
   }
 }
