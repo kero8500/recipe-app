@@ -252,6 +252,114 @@
     margin-left: 12px;
   }
 
+  /* Favorite button in recipe card */
+  .fav-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: auto;
+    box-shadow: none;
+    margin-top: 6px;
+  }
+  .fav-btn.not-faved {
+    color: #e8590c;
+    background: #fff3e6;
+    border: 1.5px solid #ffd4b0;
+  }
+  .fav-btn.not-faved:active {
+    background: #ffe8d6;
+  }
+  .fav-btn.faved {
+    color: #fff;
+    background: linear-gradient(135deg, #ff6b6b, #e8590c);
+    border: 1.5px solid transparent;
+  }
+  .fav-btn.faved:active {
+    opacity: 0.85;
+  }
+
+  /* Favorites section styles */
+  .favorites-section {
+    margin-top: 8px;
+  }
+  .favorites-section .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .favorites-section .section-header h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #8b4513;
+  }
+  .fav-clear-btn {
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #8b4513;
+    background: #fff3e6;
+    border: 1.5px solid #ffd4b0;
+    border-radius: 8px;
+    cursor: pointer;
+    width: auto;
+    box-shadow: none;
+  }
+  .fav-clear-btn:active {
+    background: #ffe8d6;
+  }
+  .fav-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    border-bottom: 1px solid #ffd4b0;
+    transition: background 0.15s;
+  }
+  .fav-item:last-child { border-bottom: none; }
+  .fav-item-info {
+    flex: 1;
+    cursor: pointer;
+    min-width: 0;
+  }
+  .fav-item-info:active { opacity: 0.7; }
+  .fav-item .fav-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .fav-item .fav-date {
+    font-size: 11px;
+    color: #8b4513;
+    margin-top: 2px;
+  }
+  .fav-delete-btn {
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #c33;
+    background: #ffe0e0;
+    border: 1px solid #ffc0c0;
+    border-radius: 6px;
+    cursor: pointer;
+    width: auto;
+    box-shadow: none;
+    margin-left: 10px;
+    flex-shrink: 0;
+  }
+  .fav-delete-btn:active {
+    background: #ffd0d0;
+  }
+
   /* #14: Small smartphone (max-width: 480px) */
   @media (max-width: 480px) {
     header h1 { font-size: 22px; }
@@ -343,6 +451,7 @@
 
   <!-- #15: aria-live for screen reader updates -->
   <div id="result" aria-live="polite"></div>
+  <div id="favorites-container"></div>
   <div id="history-container"></div>
 </div>
 
@@ -470,6 +579,149 @@ function renderHistory() {
       }
     });
   });
+}
+
+// --- Favorites management ---
+const FAVORITES_KEY = 'recipe_favorites';
+const FAVORITES_MAX = 50;
+
+function loadFavorites() {
+  try {
+    return JSON.parse(localStorage.getItem(FAVORITES_KEY)) || [];
+  } catch {
+    return [];
+  }
+}
+
+function saveFavorites(favorites) {
+  try {
+    localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
+  } catch (e) {
+    if (e.name === 'QuotaExceededError') {
+      alert('ストレージの容量が不足しています。古いお気に入りを削除してください。');
+    }
+  }
+}
+
+function getFavoriteKey(recipe) {
+  // Use recipe name as the unique key for matching
+  return (recipe.name || '').trim();
+}
+
+function isFavorite(recipe) {
+  const key = getFavoriteKey(recipe);
+  if (!key) return false;
+  const favorites = loadFavorites();
+  return favorites.some(f => getFavoriteKey(f.recipe) === key);
+}
+
+function addFavorite(recipe) {
+  const favorites = loadFavorites();
+  if (favorites.length >= FAVORITES_MAX) {
+    alert('お気に入りが上限（50件）に達しました。古いお気に入りを削除してから追加してください。');
+    return false;
+  }
+  if (isFavorite(recipe)) return false;
+  const entry = {
+    id: 'fav_' + Date.now(),
+    recipe: recipe,
+    savedAt: new Date().toISOString(),
+  };
+  favorites.unshift(entry);
+  saveFavorites(favorites);
+  renderFavorites();
+  return true;
+}
+
+function removeFavorite(recipe) {
+  const key = getFavoriteKey(recipe);
+  let favorites = loadFavorites();
+  favorites = favorites.filter(f => getFavoriteKey(f.recipe) !== key);
+  saveFavorites(favorites);
+  renderFavorites();
+}
+
+function removeFavoriteById(id) {
+  let favorites = loadFavorites();
+  favorites = favorites.filter(f => f.id !== id);
+  saveFavorites(favorites);
+  renderFavorites();
+}
+
+function clearFavorites() {
+  localStorage.removeItem(FAVORITES_KEY);
+  renderFavorites();
+}
+
+function toggleFavorite(recipe) {
+  if (isFavorite(recipe)) {
+    removeFavorite(recipe);
+    return false;
+  } else {
+    return addFavorite(recipe);
+  }
+}
+
+function renderFavorites() {
+  const container = document.getElementById('favorites-container');
+  const favorites = loadFavorites();
+  if (favorites.length === 0) {
+    container.innerHTML = '';
+    return;
+  }
+  const items = favorites.map(entry => {
+    const savedDate = new Date(entry.savedAt).toLocaleString('ja-JP');
+    const name = entry.recipe.name || '名前なし';
+    return `<div class="fav-item" data-id="${escapeHtml(entry.id)}">
+      <div class="fav-item-info" data-id="${escapeHtml(entry.id)}">
+        <div class="fav-name">⭐ ${escapeHtml(name)}</div>
+        <div class="fav-date">${escapeHtml(savedDate)}</div>
+      </div>
+      <button class="fav-delete-btn" data-id="${escapeHtml(entry.id)}">削除</button>
+    </div>`;
+  }).join('');
+  container.innerHTML = `
+    <div class="card favorites-section">
+      <div class="section-header">
+        <h3>⭐ お気に入り</h3>
+        <button class="fav-clear-btn" id="clear-favorites">すべてクリア</button>
+      </div>
+      ${items}
+    </div>
+  `;
+  document.getElementById('clear-favorites').addEventListener('click', () => {
+    if (confirm('お気に入りをすべて削除しますか？')) {
+      clearFavorites();
+      updateFavButtonInResult();
+    }
+  });
+  container.querySelectorAll('.fav-item-info').forEach(info => {
+    info.addEventListener('click', () => {
+      const id = info.dataset.id;
+      const favorites = loadFavorites();
+      const entry = favorites.find(f => f.id === id);
+      if (entry && entry.recipe) {
+        renderRecipe(entry.recipe, false);
+      }
+    });
+  });
+  container.querySelectorAll('.fav-delete-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.id;
+      removeFavoriteById(id);
+      updateFavButtonInResult();
+    });
+  });
+}
+
+// Update the favorite button in the currently displayed recipe card (if any)
+function updateFavButtonInResult() {
+  const favBtn = document.querySelector('#result .fav-btn');
+  if (!favBtn || !favBtn._recipe) return;
+  const faved = isFavorite(favBtn._recipe);
+  favBtn.className = 'fav-btn ' + (faved ? 'faved' : 'not-faved');
+  favBtn.textContent = faved ? '❤️ お気に入り済み' : '🤍 お気に入りに追加';
 }
 
 // #15: Chip toggle with aria-pressed update
@@ -658,9 +910,14 @@ function renderRecipe(r, addHistory) {
   const steps = (r.steps || []).map(s => `<li>${escapeHtml(s)}</li>`).join('');
   const n = r.nutrition || {};
 
+  const faved = isFavorite(r);
+  const favBtnClass = faved ? 'fav-btn faved' : 'fav-btn not-faved';
+  const favBtnText = faved ? '❤️ お気に入り済み' : '🤍 お気に入りに追加';
+
   document.getElementById('result').innerHTML = `
     <div class="card recipe">
-      <h2>${escapeHtml(r.name || '')}</h2>
+      <h2>${escapeHtml(r.name || '')}${faved ? ' ⭐' : ''}</h2>
+      <button class="${favBtnClass}" id="fav-toggle">${favBtnText}</button>
       <div class="meta">
         <span>⏱ ${escapeHtml(r.time || '-')}</span>
         <span>📊 ${escapeHtml(r.difficulty || '-')}</span>
@@ -682,6 +939,29 @@ function renderRecipe(r, addHistory) {
       <div class="tip">${escapeHtml(r.tips || '')}</div>
     </div>
   `;
+
+  // Attach favorite toggle handler
+  const favBtn = document.getElementById('fav-toggle');
+  favBtn._recipe = r;
+  favBtn.addEventListener('click', () => {
+    const nowFaved = isFavorite(r);
+    if (nowFaved) {
+      removeFavorite(r);
+    } else {
+      addFavorite(r);
+    }
+    // Update button state
+    const newFaved = isFavorite(r);
+    favBtn.className = 'fav-btn ' + (newFaved ? 'faved' : 'not-faved');
+    favBtn.textContent = newFaved ? '❤️ お気に入り済み' : '🤍 お気に入りに追加';
+    // Update h2 star mark
+    const h2 = document.querySelector('#result .recipe h2');
+    if (h2) {
+      const baseName = escapeHtml(r.name || '');
+      h2.innerHTML = baseName + (newFaved ? ' ⭐' : '');
+    }
+  });
+
   document.getElementById('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   // #8: Save to history (only for new recipes, not history re-display)
@@ -692,7 +972,8 @@ function renderRecipe(r, addHistory) {
 
 document.getElementById('generate').addEventListener('click', generateRecipe);
 
-// Initialize history on load
+// Initialize favorites and history on load
+renderFavorites();
 renderHistory();
 </script>
 </body>
