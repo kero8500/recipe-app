@@ -1596,6 +1596,89 @@
     color: #fff;
     border-color: #e8590c;
   }
+  /* お気に入り画面: ヘッダー＋タグフィルタバーを上部に固定 */
+  .favorites-section .fav-sticky-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: #fff;
+    padding: 8px 0 4px;
+    margin: -8px 0 8px;
+    border-bottom: 1px solid #ffe8d6;
+  }
+  .fav-header-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .fav-history-btn {
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #8b4513;
+    background: #fff3e6;
+    border: 1.5px solid #ffd4b0;
+    border-radius: 8px;
+    cursor: pointer;
+    width: auto;
+    box-shadow: none;
+    white-space: nowrap;
+  }
+  .fav-history-btn:active { background: #ffe8d6; }
+  /* 履歴モーダル */
+  .history-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 1000;
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 24px 12px;
+    overflow-y: auto;
+  }
+  .history-modal-overlay.active { display: flex; }
+  .history-modal {
+    background: #fff;
+    border-radius: 14px;
+    width: 100%;
+    max-width: 560px;
+    max-height: calc(100vh - 48px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+  }
+  .history-modal-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 14px;
+    border-bottom: 1px solid #ffe8d6;
+    background: #fff8f0;
+  }
+  .history-modal-head h3 {
+    margin: 0;
+    font-size: 15px;
+    color: #8b4513;
+  }
+  .history-modal-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #fff;
+    border: 1px solid #ffd4b0;
+    color: #8b4513;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 0;
+  }
+  .history-modal-body {
+    overflow-y: auto;
+    padding: 8px 10px 12px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .history-modal-body #history-container { display: block !important; }
   .fav-grid {
     display: flex;
     flex-direction: column;
@@ -1684,16 +1767,6 @@
     background: #fff3e6;
     color: #8b4513;
   }
-  .fav-card .fav-tag-add {
-    font-size: 10px;
-    padding: 3px 8px;
-    border-radius: 10px;
-    background: #fff;
-    color: #e8590c;
-    border: 1px dashed #ffb787;
-    cursor: pointer;
-  }
-  .fav-card .fav-tag-add:active { background: #fff3e6; }
   .fav-card .fav-del {
     position: absolute;
     top: 6px;
@@ -2337,6 +2410,16 @@
   <div id="favorites-container"></div>
   <div id="shopping-container"></div>
   <div id="history-container"></div>
+  <!-- 履歴モーダル: お気に入り画面から「📋 履歴を見る」で表示 -->
+  <div id="history-modal" class="history-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="history-modal-title">
+    <div class="history-modal">
+      <div class="history-modal-head">
+        <h3 id="history-modal-title">📋 履歴</h3>
+        <button type="button" class="history-modal-close" id="history-modal-close" aria-label="閉じる">×</button>
+      </div>
+      <div class="history-modal-body" id="history-modal-body"></div>
+    </div>
+  </div>
 
   <div id="settings-overlay" class="settings-overlay" role="dialog" aria-modal="true" aria-labelledby="settings-title">
     <div class="settings-modal">
@@ -5403,129 +5486,81 @@ renderFridge();
     var container = document.getElementById('favorites-container');
     if (!container) return;
     var favorites = loadFavorites();
-    var history = (typeof loadHistory === 'function') ? loadHistory() : [];
-    if (favorites.length === 0 && history.length === 0) { container.innerHTML = ''; return; }
-    var activeTab = loadActiveTab();
-    if (activeTab === 'history' && history.length === 0) activeTab = 'fav';
-    if (activeTab === 'fav' && favorites.length === 0) activeTab = 'history';
+    if (favorites.length === 0) { container.innerHTML = ''; return; }
 
     var activeCol = loadActiveCol();
     var tags = allTagsIn(favorites);
     // activeColが存在しないタグならallにフォールバック
-    if (activeTab === 'fav' && activeCol !== 'all' && tags.indexOf(activeCol) === -1) {
+    if (activeCol !== 'all' && tags.indexOf(activeCol) === -1) {
       activeCol = 'all';
       saveActiveCol('all');
     }
-    // コレクションバー: お気に入りが1件以上あれば常に表示（タグ登録導線の発見性を高める）
+    // コレクションバー: タグが1件以上あるときのみ表示（ヒントは出さない）
     var colBar = '';
-    if (activeTab === 'fav' && favorites.length > 0) {
+    if (tags.length > 0) {
       var tagsHtmlBar = tags.map(function (t) {
         return '<button type="button" data-col="' + htmlEscape(t) + '" class="' + (activeCol === t ? 'active' : '') + '">#' + htmlEscape(t) + '</button>';
       }).join('');
-      var hint = (tags.length === 0)
-        ? '<span class="fav-col-hint" style="font-size:11px;color:#8b4513;padding:6px 8px;">タグ未登録。各カードの🏷️から追加できます</span>'
-        : '';
       colBar = '<div class="fav-collection-bar">'
         + '<button type="button" data-col="all" class="' + (activeCol === 'all' ? 'active' : '') + '">すべて</button>'
         + tagsHtmlBar
-        + hint
       + '</div>';
     }
 
     var filtered = favorites;
-    if (activeTab === 'fav' && activeCol !== 'all') {
+    if (activeCol !== 'all') {
       filtered = favorites.filter(function (f) { return (f.tags || []).indexOf(activeCol) !== -1; });
     }
 
     var body = '';
-    if (activeTab === 'fav') {
-      if (filtered.length === 0) {
-        body = '<div style="color:#8b4513; font-size:13px; padding:14px 4px;">このコレクションに該当するレシピはまだありません。</div>';
-      } else {
-        body = '<div class="fav-grid">' + filtered.map(function (entry) {
-          var name = (entry.recipe && entry.recipe.name) || '名前なし';
-          var emoji = recipeEmoji(entry.recipe || {});
-          var img = (entry.recipe && (entry.recipe.imageUrl || entry.recipe.image)) || '';
-          var thumb = img
-            ? '<div class="fav-thumb"><img src="' + htmlEscape(img) + '" alt="' + htmlEscape(name) + '" loading="lazy"></div>'
-            : '<div class="fav-thumb">' + emoji + '</div>';
-          var tagsHtml = (entry.tags || []).map(function (t) { return '<span class="fav-tag-chip">#' + htmlEscape(t) + '</span>'; }).join('');
-          var tagCount = (entry.tags || []).length;
-          var tagBtnLabel = tagCount > 0 ? '🏷️' : '🏷️＋';
-          return '<div class="fav-card" data-id="' + htmlEscape(entry.id) + '">'
-            + '<button type="button" class="fav-tag-btn" data-id="' + htmlEscape(entry.id) + '" aria-label="タグを編集" title="タグを編集">' + tagBtnLabel + '</button>'
-            + '<button type="button" class="fav-del" data-id="' + htmlEscape(entry.id) + '" aria-label="削除">×</button>'
-            + thumb
-            + '<div class="fav-meta">'
-              + '<div class="fav-name">' + htmlEscape(name) + '</div>'
-              + '<div class="fav-tags">' + (tagsHtml || '<button type="button" class="fav-tag-add" data-id="' + htmlEscape(entry.id) + '">＋ タグを追加</button>') + '</div>'
-            + '</div>'
-          + '</div>';
-        }).join('') + '</div>';
-      }
+    if (filtered.length === 0) {
+      body = '<div style="color:#8b4513; font-size:13px; padding:14px 4px;">このコレクションに該当するレシピはまだありません。</div>';
     } else {
-      // history tab - delegate to renderHistory if present (or simple list)
-      body = '<div id="history-embed"></div>';
+      body = '<div class="fav-grid">' + filtered.map(function (entry) {
+        var name = (entry.recipe && entry.recipe.name) || '名前なし';
+        var emoji = recipeEmoji(entry.recipe || {});
+        var img = (entry.recipe && (entry.recipe.imageUrl || entry.recipe.image)) || '';
+        var thumb = img
+          ? '<div class="fav-thumb"><img src="' + htmlEscape(img) + '" alt="' + htmlEscape(name) + '" loading="lazy"></div>'
+          : '<div class="fav-thumb">' + emoji + '</div>';
+        var tagsHtml = (entry.tags || []).map(function (t) { return '<span class="fav-tag-chip">#' + htmlEscape(t) + '</span>'; }).join('');
+        return '<div class="fav-card" data-id="' + htmlEscape(entry.id) + '">'
+          + '<button type="button" class="fav-tag-btn" data-id="' + htmlEscape(entry.id) + '" aria-label="タグを編集" title="タグを編集">🏷️</button>'
+          + '<button type="button" class="fav-del" data-id="' + htmlEscape(entry.id) + '" aria-label="削除">×</button>'
+          + thumb
+          + '<div class="fav-meta">'
+            + '<div class="fav-name">' + htmlEscape(name) + '</div>'
+            + '<div class="fav-tags">' + tagsHtml + '</div>'
+          + '</div>'
+        + '</div>';
+      }).join('') + '</div>';
     }
 
     container.innerHTML = ''
       + '<div class="card favorites-section">'
-        + '<div class="section-header">'
-          + '<h3>⭐ コレクション</h3>'
-          + (activeTab === 'fav' && favorites.length > 0
-             ? '<button class="fav-clear-btn" id="clear-favorites">すべてクリア</button>' : '')
+        + '<div class="fav-sticky-header">'
+          + '<div class="section-header">'
+            + '<h3>⭐ お気に入り（' + favorites.length + '）</h3>'
+            + '<div class="fav-header-actions">'
+              + '<button type="button" class="fav-history-btn" id="open-history-modal" aria-label="履歴を見る">📋 履歴</button>'
+              + (favorites.length > 0 ? '<button class="fav-clear-btn" id="clear-favorites">すべてクリア</button>' : '')
+            + '</div>'
+          + '</div>'
+          + colBar
         + '</div>'
-        + '<div class="fav-tabs">'
-          + '<button type="button" data-tab="fav" class="' + (activeTab === 'fav' ? 'active' : '') + '">⭐ お気に入り（' + favorites.length + '）</button>'
-          + '<button type="button" data-tab="history" class="' + (activeTab === 'history' ? 'active' : '') + '">🕓 履歴（' + history.length + '）</button>'
-        + '</div>'
-        + colBar
         + body
       + '</div>';
 
-    // Tab switching
-    container.querySelectorAll('.fav-tabs button').forEach(function (b) {
-      b.addEventListener('click', function () { saveActiveTab(b.getAttribute('data-tab')); window.renderFavorites(); });
-    });
+    // タグフィルタ切替
     container.querySelectorAll('.fav-collection-bar button').forEach(function (b) {
       b.addEventListener('click', function () { saveActiveCol(b.getAttribute('data-col')); window.renderFavorites(); });
     });
 
-    if (activeTab === 'history') {
-      // Render the history into history-embed via existing renderHistory
-      // renderHistory writes into #history-container - we'll just inline-call it and move content
-      var tmpHost = document.getElementById('history-embed');
-      if (tmpHost && typeof renderHistory === 'function') {
-        // Move original history-container content here after renderHistory
-        renderHistory();
-        var hc = document.getElementById('history-container');
-        if (hc) {
-          tmpHost.innerHTML = hc.innerHTML;
-          // Re-wire clear history button inside our embed
-          var clearH = tmpHost.querySelector('#clear-history');
-          if (clearH) clearH.addEventListener('click', function () {
-            if (confirm('履歴をすべて削除しますか？')) { if (typeof clearHistory === 'function') clearHistory(); window.renderFavorites(); }
-          });
-          tmpHost.querySelectorAll('.history-item').forEach(function (item) {
-            item.addEventListener('click', function (e) {
-              if (e.target.closest('button')) return;
-              var idx = parseInt(item.dataset.idx, 10);
-              var entry = loadHistory()[idx];
-              if (entry && entry.recipe) {
-                if (typeof openRecipeFromList === 'function') openRecipeFromList(entry.recipe);
-                else renderEntry(entry.recipe);
-              }
-            });
-          });
-          // Hide original history to avoid duplicate
-          hc.style.display = 'none';
-        }
-      }
-    } else {
-      // Show original history-container again (if was hidden)
-      var hc2 = document.getElementById('history-container');
-      if (hc2) hc2.style.display = '';
-    }
+    // 履歴モーダルを開く
+    var openHistBtn = document.getElementById('open-history-modal');
+    if (openHistBtn) openHistBtn.addEventListener('click', function () {
+      if (typeof window.openHistoryModal === 'function') window.openHistoryModal();
+    });
 
     // Fav actions
     var clearBtn = document.getElementById('clear-favorites');
@@ -5536,7 +5571,7 @@ renderFridge();
       var id = card.getAttribute('data-id');
       // Open recipe on tap (but ignore taps on buttons)
       card.addEventListener('click', function (e) {
-        if (e.target.closest('.fav-del, .fav-tag-btn, .fav-tag-add')) return;
+        if (e.target.closest('.fav-del, .fav-tag-btn')) return;
         var favs = loadFavorites();
         var ent = favs.find(function (f) { return f.id === id; });
         if (ent && ent.recipe) {
@@ -5578,13 +5613,65 @@ renderFridge();
         openTagPicker(b.getAttribute('data-id'));
       });
     });
-    container.querySelectorAll('.fav-tag-add').forEach(function (b) {
-      b.addEventListener('click', function (e) {
-        e.stopPropagation();
-        openTagPicker(b.getAttribute('data-id'));
-      });
-    });
   };
+
+  // ===== 履歴モーダル制御 =====
+  // お気に入り画面の「📋 履歴」ボタンから呼ばれる。
+  // #history-container を隠したまま renderHistory で描画し、その中身を
+  // #history-modal-body に移してモーダルで表示する。
+  window.openHistoryModal = function () {
+    var modal = document.getElementById('history-modal');
+    var body = document.getElementById('history-modal-body');
+    if (!modal || !body) return;
+    try { if (typeof renderHistory === 'function') renderHistory(); } catch (_) {}
+    var hc = document.getElementById('history-container');
+    if (hc) {
+      var hcHtml = hc.innerHTML.trim();
+      body.innerHTML = hcHtml || '<div style="padding:24px 12px;text-align:center;color:#6b4423;font-size:14px;">履歴はまだありません。</div>';
+      // 元コンテナは二重表示回避のため非表示
+      hc.style.display = 'none';
+      // モーダル内のクリア履歴ボタンを再配線
+      var clearH = body.querySelector('#clear-history');
+      if (clearH) clearH.addEventListener('click', function () {
+        if (confirm('履歴をすべて削除しますか？')) {
+          if (typeof clearHistory === 'function') clearHistory();
+          window.openHistoryModal();
+        }
+      });
+      // 履歴アイテムのタップで該当レシピを開き、モーダルを閉じる
+      body.querySelectorAll('.history-item').forEach(function (item) {
+        item.addEventListener('click', function (e) {
+          if (e.target.closest('button')) return;
+          var idx = parseInt(item.dataset.idx, 10);
+          var entry = (typeof loadHistory === 'function') ? loadHistory()[idx] : null;
+          if (entry && entry.recipe) {
+            window.closeHistoryModal();
+            if (typeof openRecipeFromList === 'function') openRecipeFromList(entry.recipe);
+            else renderEntry(entry.recipe);
+          }
+        });
+      });
+    }
+    modal.classList.add('active');
+  };
+  window.closeHistoryModal = function () {
+    var modal = document.getElementById('history-modal');
+    if (modal) modal.classList.remove('active');
+  };
+  (function wireHistoryModal() {
+    var closeBtn = document.getElementById('history-modal-close');
+    if (closeBtn) closeBtn.addEventListener('click', window.closeHistoryModal);
+    var modal = document.getElementById('history-modal');
+    if (modal) modal.addEventListener('click', function (e) {
+      if (e.target === modal) window.closeHistoryModal();
+    });
+    // ESC キーで閉じる（表示中のみ）
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && modal && modal.classList.contains('active')) {
+        window.closeHistoryModal();
+      }
+    });
+  })();
 
   function openTagPicker(favId) {
     var favs = loadFavorites();
@@ -5927,7 +6014,7 @@ renderFridge();
     home: ['.top-menu', '#panel-recipe', '#panel-remix', '#result'],
     fridge: ['#panel-fridge'],
     shopping: ['#shopping-container'],
-    favorites: ['#favorites-container', '#history-container'],
+    favorites: ['#favorites-container'],
   };
 
   // お気に入りタブや買い物タブでも空の時でも見栄えが良いよう、空時メッセージを表示する
@@ -5995,21 +6082,20 @@ renderFridge();
     }
     if (tabName === 'favorites' && typeof window.renderFavorites === 'function') {
       try { window.renderFavorites(); } catch (_) {}
-      try { window.renderHistory && window.renderHistory(); } catch (_) {}
     }
     if (tabName === 'shopping' && typeof window.renderShoppingList === 'function') {
       try { window.renderShoppingList(); } catch (_) {}
     }
 
-    // 空時のヒント表示（お気に入り・買い物のコンテナが空のとき）
+    // 空時のヒント表示（お気に入りコンテナが空のとき）
     if (tabName === 'favorites') {
       var favEl = document.getElementById('favorites-container');
-      var histEl = document.getElementById('history-container');
       if (favEl && !favEl.innerHTML.trim()) {
-        favEl.innerHTML = '<div class="card"><div style="padding:20px;text-align:center;color:#6b4423;font-size:15px;">⭐ お気に入りはまだありません。<br><span style="font-size:13px;">レシピ画面でハートを押すと保存されます。</span></div></div>';
-      }
-      if (histEl && !histEl.innerHTML.trim()) {
-        histEl.innerHTML = '<div class="card"><div style="padding:16px;text-align:center;color:#6b4423;font-size:13px;">履歴はまだありません。</div></div>';
+        favEl.innerHTML = '<div class="card"><div style="padding:20px;text-align:center;color:#6b4423;font-size:15px;">⭐ お気に入りはまだありません。<br><span style="font-size:13px;">レシピ画面でハートを押すと保存されます。</span></div><div style="text-align:center;padding-bottom:16px;"><button type="button" class="fav-history-btn" id="open-history-modal-empty">📋 履歴を見る</button></div></div>';
+        var emptyBtn = document.getElementById('open-history-modal-empty');
+        if (emptyBtn) emptyBtn.addEventListener('click', function () {
+          if (typeof window.openHistoryModal === 'function') window.openHistoryModal();
+        });
       }
     }
     if (tabName === 'shopping') {
@@ -6043,10 +6129,11 @@ renderFridge();
     var tabName = activeTab ? activeTab.dataset.tab : 'home';
     if (tabName !== 'favorites') {
       var f = document.getElementById('favorites-container');
-      var h = document.getElementById('history-container');
       if (f) f.style.display = 'none';
-      if (h) h.style.display = 'none';
     }
+    // 履歴コンテナは常に非表示（履歴はモーダル表示のみ）
+    var h = document.getElementById('history-container');
+    if (h) h.style.display = 'none';
     if (tabName !== 'shopping') {
       var s = document.getElementById('shopping-container');
       if (s) s.style.display = 'none';
