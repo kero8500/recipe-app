@@ -1684,6 +1684,16 @@
     background: #fff3e6;
     color: #8b4513;
   }
+  .fav-card .fav-tag-add {
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 10px;
+    background: #fff;
+    color: #e8590c;
+    border: 1px dashed #ffb787;
+    cursor: pointer;
+  }
+  .fav-card .fav-tag-add:active { background: #fff3e6; }
   .fav-card .fav-del {
     position: absolute;
     top: 6px;
@@ -2498,11 +2508,13 @@ function renderHistory() {
   `;
   document.getElementById('clear-history').addEventListener('click', clearHistory);
   container.querySelectorAll('.history-item').forEach(item => {
-    item.addEventListener('click', () => {
+    item.addEventListener('click', (e) => {
+      // Avoid conflict with potential inner controls
+      if (e.target.closest('button')) return;
       const idx = parseInt(item.dataset.idx, 10);
       const entry = loadHistory()[idx];
       if (entry && entry.recipe) {
-        renderEntry(entry.recipe);
+        openRecipeFromList(entry.recipe);
       }
     });
   });
@@ -2623,12 +2635,13 @@ function renderFavorites() {
     }
   });
   container.querySelectorAll('.fav-item-info').forEach(info => {
-    info.addEventListener('click', () => {
+    info.addEventListener('click', (e) => {
+      if (e.target.closest('button')) return;
       const id = info.dataset.id;
       const favorites = loadFavorites();
       const entry = favorites.find(f => f.id === id);
       if (entry && entry.recipe) {
-        renderEntry(entry.recipe);
+        openRecipeFromList(entry.recipe);
       }
     });
   });
@@ -3618,6 +3631,25 @@ function renderEntry(r) {
   } else {
     renderRecipe(r, false);
   }
+}
+
+// Open a saved recipe from favorites/history list: switch to home tab, render, and scroll.
+function openRecipeFromList(recipe) {
+  if (!recipe) return;
+  try {
+    if (typeof window.__activateTab === 'function') {
+      window.__activateTab('home');
+    }
+  } catch (_) {}
+  renderEntry(recipe);
+  // renderRecipe/renderMeal/renderWeekly already scroll #result into view.
+  // As a fallback (and because tab switching may repaint), ensure scroll on next tick.
+  setTimeout(function () {
+    var res = document.getElementById('result');
+    if (res) {
+      try { res.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (_) {}
+    }
+  }, 60);
 }
 
 // --- Weekly (1週間分献立) feature ---
@@ -5384,15 +5416,21 @@ renderFridge();
       activeCol = 'all';
       saveActiveCol('all');
     }
-    // 登録済みタグが0件のときはフィルタ自体を非表示
-    var colBar = (activeTab === 'fav' && tags.length > 0)
-      ? ('<div class="fav-collection-bar">'
-          + '<button type="button" data-col="all" class="' + (activeCol === 'all' ? 'active' : '') + '">すべて</button>'
-          + tags.map(function (t) {
-              return '<button type="button" data-col="' + htmlEscape(t) + '" class="' + (activeCol === t ? 'active' : '') + '">#' + htmlEscape(t) + '</button>';
-            }).join('')
-        + '</div>')
-      : '';
+    // コレクションバー: お気に入りが1件以上あれば常に表示（タグ登録導線の発見性を高める）
+    var colBar = '';
+    if (activeTab === 'fav' && favorites.length > 0) {
+      var tagsHtmlBar = tags.map(function (t) {
+        return '<button type="button" data-col="' + htmlEscape(t) + '" class="' + (activeCol === t ? 'active' : '') + '">#' + htmlEscape(t) + '</button>';
+      }).join('');
+      var hint = (tags.length === 0)
+        ? '<span class="fav-col-hint" style="font-size:11px;color:#8b4513;padding:6px 8px;">タグ未登録。各カードの🏷️から追加できます</span>'
+        : '';
+      colBar = '<div class="fav-collection-bar">'
+        + '<button type="button" data-col="all" class="' + (activeCol === 'all' ? 'active' : '') + '">すべて</button>'
+        + tagsHtmlBar
+        + hint
+      + '</div>';
+    }
 
     var filtered = favorites;
     if (activeTab === 'fav' && activeCol !== 'all') {
@@ -5412,13 +5450,15 @@ renderFridge();
             ? '<div class="fav-thumb"><img src="' + htmlEscape(img) + '" alt="' + htmlEscape(name) + '" loading="lazy"></div>'
             : '<div class="fav-thumb">' + emoji + '</div>';
           var tagsHtml = (entry.tags || []).map(function (t) { return '<span class="fav-tag-chip">#' + htmlEscape(t) + '</span>'; }).join('');
+          var tagCount = (entry.tags || []).length;
+          var tagBtnLabel = tagCount > 0 ? '🏷️' : '🏷️＋';
           return '<div class="fav-card" data-id="' + htmlEscape(entry.id) + '">'
-            + '<button type="button" class="fav-tag-btn" data-id="' + htmlEscape(entry.id) + '" aria-label="タグを編集">🏷</button>'
+            + '<button type="button" class="fav-tag-btn" data-id="' + htmlEscape(entry.id) + '" aria-label="タグを編集" title="タグを編集">' + tagBtnLabel + '</button>'
             + '<button type="button" class="fav-del" data-id="' + htmlEscape(entry.id) + '" aria-label="削除">×</button>'
             + thumb
             + '<div class="fav-meta">'
               + '<div class="fav-name">' + htmlEscape(name) + '</div>'
-              + '<div class="fav-tags">' + tagsHtml + '</div>'
+              + '<div class="fav-tags">' + (tagsHtml || '<button type="button" class="fav-tag-add" data-id="' + htmlEscape(entry.id) + '">＋ タグを追加</button>') + '</div>'
             + '</div>'
           + '</div>';
         }).join('') + '</div>';
@@ -5467,10 +5507,14 @@ renderFridge();
             if (confirm('履歴をすべて削除しますか？')) { if (typeof clearHistory === 'function') clearHistory(); window.renderFavorites(); }
           });
           tmpHost.querySelectorAll('.history-item').forEach(function (item) {
-            item.addEventListener('click', function () {
+            item.addEventListener('click', function (e) {
+              if (e.target.closest('button')) return;
               var idx = parseInt(item.dataset.idx, 10);
               var entry = loadHistory()[idx];
-              if (entry && entry.recipe) renderEntry(entry.recipe);
+              if (entry && entry.recipe) {
+                if (typeof openRecipeFromList === 'function') openRecipeFromList(entry.recipe);
+                else renderEntry(entry.recipe);
+              }
             });
           });
           // Hide original history to avoid duplicate
@@ -5492,10 +5536,13 @@ renderFridge();
       var id = card.getAttribute('data-id');
       // Open recipe on tap (but ignore taps on buttons)
       card.addEventListener('click', function (e) {
-        if (e.target.closest('.fav-del, .fav-tag-btn')) return;
+        if (e.target.closest('.fav-del, .fav-tag-btn, .fav-tag-add')) return;
         var favs = loadFavorites();
         var ent = favs.find(function (f) { return f.id === id; });
-        if (ent && ent.recipe) renderEntry(ent.recipe);
+        if (ent && ent.recipe) {
+          if (typeof openRecipeFromList === 'function') openRecipeFromList(ent.recipe);
+          else renderEntry(ent.recipe);
+        }
       });
       // Long press = open tag picker
       var pressTimer = null;
@@ -5526,6 +5573,12 @@ renderFridge();
       });
     });
     container.querySelectorAll('.fav-tag-btn').forEach(function (b) {
+      b.addEventListener('click', function (e) {
+        e.stopPropagation();
+        openTagPicker(b.getAttribute('data-id'));
+      });
+    });
+    container.querySelectorAll('.fav-tag-add').forEach(function (b) {
       b.addEventListener('click', function (e) {
         e.stopPropagation();
         openTagPicker(b.getAttribute('data-id'));
