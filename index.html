@@ -229,6 +229,11 @@
   .history-section {
     margin-top: 8px;
   }
+  .history-list {
+    max-height: 60vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
   .history-section .section-header {
     display: flex;
     justify-content: space-between;
@@ -1182,6 +1187,34 @@
     line-height: 1.5;
     margin-bottom: 10px;
   }
+  .candidate-card .cand-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .candidate-card .cand-fav {
+    width: 100%;
+    min-height: 44px;
+    padding: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    border-radius: 10px;
+    border: 1.5px solid #ffd4b0;
+    background: #fff3e6;
+    color: #8b4513;
+    cursor: pointer;
+    box-shadow: none;
+  }
+  .candidate-card .cand-fav.faved {
+    background: #ffe0e0;
+    color: #c33;
+    border-color: #ffb3b3;
+  }
+  .candidate-card .cand-fav:disabled {
+    opacity: 0.9;
+    cursor: default;
+  }
   .candidate-card .cand-choose {
     width: 100%;
     background: linear-gradient(135deg, #ffa66b, #ff8a3d);
@@ -1564,12 +1597,42 @@
     border-color: #e8590c;
   }
   .fav-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
-  @media (min-width: 760px) {
-    .fav-grid { grid-template-columns: repeat(3, 1fr); }
+  /* List-style fav cards: horizontal layout (thumb + meta) */
+  .fav-grid .fav-card {
+    flex-direction: row;
+    align-items: center;
+    min-height: 72px;
+  }
+  .fav-grid .fav-card .fav-thumb {
+    width: 72px;
+    height: 72px;
+    aspect-ratio: auto;
+    flex: 0 0 72px;
+    font-size: 32px;
+  }
+  .fav-grid .fav-card .fav-meta {
+    flex: 1;
+    padding: 10px 88px 10px 12px;
+    min-width: 0;
+  }
+  .fav-grid .fav-card .fav-name {
+    font-size: 15px;
+    -webkit-line-clamp: 2;
+  }
+  .fav-grid .fav-card .fav-tag-btn {
+    top: 50%;
+    left: auto;
+    right: 44px;
+    transform: translateY(-50%);
+  }
+  .fav-grid .fav-card .fav-del {
+    top: 50%;
+    right: 8px;
+    transform: translateY(-50%);
   }
   .fav-card {
     position: relative;
@@ -2369,11 +2432,17 @@ let currentAbortController = null;
 
 // --- #8: History management ---
 const HISTORY_KEY = 'recipeHistory';
-const HISTORY_MAX = 10;
+const HISTORY_MAX = 50;
 
 function loadHistory() {
   try {
-    return JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
+    const arr = JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
+    if (Array.isArray(arr) && arr.length > HISTORY_MAX) {
+      const trimmed = arr.slice(0, HISTORY_MAX);
+      try { localStorage.setItem(HISTORY_KEY, JSON.stringify(trimmed)); } catch {}
+      return trimmed;
+    }
+    return Array.isArray(arr) ? arr : [];
   } catch {
     return [];
   }
@@ -2395,7 +2464,7 @@ function addToHistory(recipe) {
     recipe: recipe,
   };
   history.unshift(entry);
-  if (history.length > HISTORY_MAX) history.pop();
+  while (history.length > HISTORY_MAX) history.pop();
   saveHistory(history);
   renderHistory();
 }
@@ -2421,10 +2490,10 @@ function renderHistory() {
   container.innerHTML = `
     <div class="card history-section">
       <div class="section-header">
-        <h3>📋 履歴</h3>
+        <h3>📋 履歴（${history.length}）</h3>
         <button class="history-clear-btn" id="clear-history">履歴をクリア</button>
       </div>
-      ${items}
+      <div class="history-list">${items}</div>
     </div>
   `;
   document.getElementById('clear-history').addEventListener('click', clearHistory);
@@ -3087,7 +3156,10 @@ function renderCandidates(candidates, type) {
         '<span>💰 ' + escapeHtml(cost) + '</span>' +
       '</div>' +
       (summary ? '<div class="cand-summary">' + escapeHtml(summary) + '</div>' : '') +
-      '<button class="cand-choose" data-idx="' + idx + '">このレシピで決定</button>' +
+      '<div class="cand-actions">' +
+        '<button class="cand-choose" data-idx="' + idx + '">このレシピで決定</button>' +
+        '<button class="cand-fav" data-idx="' + idx + '" type="button">🤍 お気に入りに追加</button>' +
+      '</div>' +
     '</div>';
   }).join('');
 
@@ -3108,6 +3180,25 @@ function renderCandidates(candidates, type) {
         renderMeal(chosen, true);
       } else {
         renderRecipe(chosen, true);
+      }
+    });
+  });
+  resultEl.querySelectorAll('.cand-fav').forEach(function (b) {
+    b.addEventListener('click', function (e) {
+      e.stopPropagation();
+      const idx = parseInt(b.dataset.idx, 10);
+      const chosen = candidates[idx];
+      if (!chosen) return;
+      try {
+        if (typeof addFavorite === 'function') addFavorite(chosen);
+        b.textContent = '❤️ お気に入り済み';
+        b.classList.add('faved');
+        b.disabled = true;
+        if (typeof window.showSnackbar === 'function') {
+          window.showSnackbar('お気に入りに追加しました');
+        }
+      } catch (err) {
+        console.warn('addFavorite failed', err);
       }
     });
   });
@@ -5235,10 +5326,17 @@ renderFridge();
   function saveActiveCol(c) { try { localStorage.setItem(FAV_COLLECTION_KEY, c); } catch (_) {} }
 
   var DEFAULT_TAGS = ['作り置き', '時短', '子供用', '主菜', '副菜', '節約'];
+  // フィルタ用: お気に入りに実際に登録されているタグのみ
   function allTagsIn(favorites) {
     var set = {};
+    favorites.forEach(function (f) { (f.tags || []).forEach(function (t) { if (t) set[t] = true; }); });
+    return Object.keys(set);
+  }
+  // タグピッカー用: デフォルト + 既存タグ
+  function allTagsForPicker(favorites) {
+    var set = {};
     DEFAULT_TAGS.forEach(function (t) { set[t] = true; });
-    favorites.forEach(function (f) { (f.tags || []).forEach(function (t) { set[t] = true; }); });
+    favorites.forEach(function (f) { (f.tags || []).forEach(function (t) { if (t) set[t] = true; }); });
     return Object.keys(set);
   }
   function getTagsForFav(entry) { return Array.isArray(entry.tags) ? entry.tags : []; }
@@ -5281,7 +5379,13 @@ renderFridge();
 
     var activeCol = loadActiveCol();
     var tags = allTagsIn(favorites);
-    var colBar = activeTab === 'fav'
+    // activeColが存在しないタグならallにフォールバック
+    if (activeTab === 'fav' && activeCol !== 'all' && tags.indexOf(activeCol) === -1) {
+      activeCol = 'all';
+      saveActiveCol('all');
+    }
+    // 登録済みタグが0件のときはフィルタ自体を非表示
+    var colBar = (activeTab === 'fav' && tags.length > 0)
       ? ('<div class="fav-collection-bar">'
           + '<button type="button" data-col="all" class="' + (activeCol === 'all' ? 'active' : '') + '">すべて</button>'
           + tags.map(function (t) {
@@ -5434,7 +5538,7 @@ renderFridge();
     var entry = favs.find(function (f) { return f.id === favId; });
     if (!entry) return;
     var current = (entry.tags || []).slice();
-    var allTags = allTagsIn(favs).slice();
+    var allTags = allTagsForPicker(favs).slice();
     var overlay = document.createElement('div');
     overlay.className = 'tag-picker-overlay';
     overlay.innerHTML = ''
@@ -5499,7 +5603,12 @@ renderFridge();
   var HINTS_KEY = 'recipeCandidateHintsShown';
 
   var origRenderCandidates = window.renderCandidates;
+  // [DISABLED] Tinder-style swipe stack for candidates removed. Falling back to original list UI.
+  var __CAND_SWIPE_DISABLED__ = true;
   window.renderCandidates = function (candidates, type) {
+    if (__CAND_SWIPE_DISABLED__ && typeof origRenderCandidates === 'function') {
+      return origRenderCandidates(candidates, type);
+    }
     var resultEl = document.getElementById('result');
     if (!resultEl || !Array.isArray(candidates) || candidates.length === 0) return;
     var title = type === 'meal' ? '🍱 献立の候補3つ' : '🍳 レシピの候補3つ';
