@@ -5796,6 +5796,15 @@ renderFridge();
         el.style.display = '';
       });
     });
+    // #panel-fridge は単独で表示するため .active クラスを付与（.panel のCSS: display:none 対応）
+    // panel-recipe / panel-remix はホーム内の top-menu サブ切替で管理されるため、ここでは触らない
+    if (key === 'fridge') {
+      var fr = document.getElementById('panel-fridge');
+      if (fr) fr.classList.add('active');
+    } else {
+      var fr2 = document.getElementById('panel-fridge');
+      if (fr2) fr2.classList.remove('active');
+    }
   }
 
   function activateTab(tabName) {
