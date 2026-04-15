@@ -1510,24 +1510,6 @@
     flex-wrap: wrap;
     margin: 6px 0 10px;
   }
-  .shop-share-row button {
-    flex: 1 1 auto;
-    min-height: 44px;
-    padding: 10px 12px;
-    font-size: 13px;
-    font-weight: 700;
-    border-radius: 10px;
-    border: 1.5px solid #ffd4b0;
-    background: #fff;
-    color: #8b4513;
-    cursor: pointer;
-    box-shadow: none;
-  }
-  .shop-share-row button.primary {
-    background: linear-gradient(135deg,#ff8c42,#e8590c);
-    color: #fff;
-    border: none;
-  }
 
   /* Favorites/History tabs + grid */
   .fav-tabs {
@@ -3925,6 +3907,34 @@ function buildShareText(data, type) {
       });
       lines.push('');
     });
+  } else if (type === 'shopping') {
+    lines.push('🛒 買い物リスト');
+    lines.push('');
+    const order = Array.isArray(data.catOrder) ? data.catOrder : [];
+    const labels = data.catLabels || {};
+    const groups = data.groups || {};
+    let total = 0;
+    order.forEach(function (cat) {
+      const items = groups[cat];
+      if (!items || items.length === 0) return;
+      lines.push(labels[cat] || cat);
+      items.forEach(function (it) {
+        lines.push('・' + (it.name || '') + (it.amount ? '（' + it.amount + '）' : ''));
+        total++;
+      });
+      lines.push('');
+    });
+    if (Array.isArray(data.checked) && data.checked.length) {
+      lines.push('✓ 購入済み');
+      data.checked.forEach(function (it) {
+        lines.push('・' + (it.name || '') + (it.amount ? '（' + it.amount + '）' : ''));
+      });
+      lines.push('');
+    }
+    if (total === 0 && (!data.checked || data.checked.length === 0)) {
+      lines.push('（アイテムがありません）');
+      lines.push('');
+    }
   }
   lines.push('レシピアプリ: ' + APP_SHARE_URL);
   return lines.join('\n');
@@ -3933,6 +3943,7 @@ function buildShareText(data, type) {
 function getShareTitle(data, type) {
   if (type === 'meal') return '🍱 ' + (data.name || '1食分の献立');
   if (type === 'weekly') return '📅 ' + (data.name || '1週間分の献立');
+  if (type === 'shopping') return '🛒 買い物リスト';
   return '🍳 ' + (data.name || 'レシピ');
 }
 
@@ -5128,10 +5139,7 @@ renderFridge();
           + '</div>'
         + '</div>'
         + '<div class="shop-share-row">'
-          + '<button type="button" class="primary" id="shop-share">📤 共有</button>'
-          + '<button type="button" id="shop-share-line">LINE</button>'
-          + '<button type="button" id="shop-share-mail">メール</button>'
-          + '<button type="button" id="shop-share-copy">コピー</button>'
+          + '<button type="button" class="share-btn" id="shop-share">📤 共有する</button>'
         + '</div>'
         + groupsHtml
         + checkedHtml
@@ -5178,46 +5186,19 @@ renderFridge();
       });
     });
 
-    // Share handlers
-    function buildShareText() {
-      var lines = ['【買い物リスト】'];
-      CAT_ORDER.forEach(function (cat) {
-        var items = grouped.groups[cat];
-        if (!items || items.length === 0) return;
-        lines.push('');
-        lines.push(CAT_LABELS[cat]);
-        items.forEach(function (it) {
-          lines.push('・' + it.name + (it.amount ? '（' + it.amount + '）' : ''));
-        });
+    // Share handler: unified with recipe share menu (LINE/メール/Web Share/コピー)
+    var shopShareBtn = document.getElementById('shop-share');
+    if (shopShareBtn) {
+      shopShareBtn.addEventListener('click', function () {
+        var shareData = {
+          groups: grouped.groups,
+          checked: grouped.checked || [],
+          catOrder: CAT_ORDER,
+          catLabels: CAT_LABELS
+        };
+        showShareMenu(shareData, 'shopping');
       });
-      return lines.join('\n');
     }
-    document.getElementById('shop-share').addEventListener('click', async function () {
-      var text = buildShareText();
-      if (navigator.share) {
-        try { await navigator.share({ title: '買い物リスト', text: text }); return; } catch (_) { /* fallthrough */ }
-      }
-      try {
-        await navigator.clipboard.writeText(text);
-        window.showSnackbar && window.showSnackbar('買い物リストをコピーしました');
-      } catch (_) {
-        window.showSnackbar && window.showSnackbar('共有に失敗しました');
-      }
-    });
-    document.getElementById('shop-share-line').addEventListener('click', function () {
-      var text = buildShareText();
-      var url = 'https://line.me/R/msg/text/?' + encodeURIComponent(text);
-      window.open(url, '_blank');
-    });
-    document.getElementById('shop-share-mail').addEventListener('click', function () {
-      var text = buildShareText();
-      var href = 'mailto:?subject=' + encodeURIComponent('買い物リスト') + '&body=' + encodeURIComponent(text);
-      window.location.href = href;
-    });
-    document.getElementById('shop-share-copy').addEventListener('click', async function () {
-      try { await navigator.clipboard.writeText(buildShareText()); window.showSnackbar && window.showSnackbar('コピーしました'); }
-      catch (_) { window.showSnackbar && window.showSnackbar('コピーに失敗しました'); }
-    });
 
     // Re-attach swipe (phase1 patch)
     container.querySelectorAll('.shop-item').forEach(function (item) {
