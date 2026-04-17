@@ -5114,6 +5114,15 @@ renderFridge();
       el.classList.remove('show-right-bg');
     });
   };
+
+  // Helper to reset swipe state on a card (used when delete is cancelled)
+  window.resetSwipeState = function (el) {
+    if (!el) return;
+    el.classList.remove('swipe-out-left', 'swipe-out-right', 'swiping', 'show-left-bg', 'show-right-bg');
+    el.classList.add('swipe-reset');
+    el.style.transform = '';
+    el.style.opacity = '';
+  };
 })();
 
 /* === Phase 1: Sticky CTA bar === */
@@ -5849,15 +5858,17 @@ renderFridge();
         var id = card.getAttribute('data-id');
         window.attachSwipe(card, {
           leftHint: '削除',
-          onLeft: function () {
+          onLeft: function (el) {
             var favs = loadFavorites();
             var entry = favs.find(function (f) { return f.id === id; });
-            if (!entry) return;
+            if (!entry) { window.resetSwipeState(el); return; }
             var recipeName = (entry.recipe && entry.recipe.name) || 'レシピ';
             if (typeof window.showDeleteConfirm === 'function') {
               window.showDeleteConfirm(recipeName, function () {
                 removeFavoriteById(id);
                 updateFavButtonInResult();
+              }, function () {
+                window.resetSwipeState(el);
               });
             }
           }
@@ -5936,11 +5947,11 @@ renderFridge();
           if (item._swipeBound) return;
           window.attachSwipe(item, {
             leftHint: '削除',
-            onLeft: function () {
+            onLeft: function (el) {
               var idx = parseInt(item.dataset.idx, 10);
               var list = (typeof loadHistory === 'function') ? loadHistory() : [];
               var entry = list[idx];
-              if (!entry) return;
+              if (!entry) { window.resetSwipeState(el); return; }
               var name = entry.name || 'レシピ';
               if (typeof window.showDeleteConfirm === 'function') {
                 window.showDeleteConfirm(name, function () {
@@ -5956,6 +5967,8 @@ renderFridge();
                   saveHistory(freshList);
                   renderHistory();
                   window.openHistoryModal();
+                }, function () {
+                  window.resetSwipeState(el);
                 });
               }
             }
@@ -6629,27 +6642,32 @@ document.addEventListener('DOMContentLoaded', function () {
   if (!overlay || !nameEl || !cancelBtn || !deleteBtn) return;
 
   var pendingCallback = null;
+  var pendingCancelCallback = null;
 
-  window.showDeleteConfirm = function (recipeName, onConfirm) {
+  window.showDeleteConfirm = function (recipeName, onConfirm, onCancel) {
     nameEl.textContent = recipeName || '';
     pendingCallback = onConfirm || null;
+    pendingCancelCallback = onCancel || null;
     overlay.classList.add('active');
   };
 
-  function close() {
+  function close(cancelled) {
     overlay.classList.remove('active');
+    var cancelCb = pendingCancelCallback;
     pendingCallback = null;
+    pendingCancelCallback = null;
+    if (cancelled && typeof cancelCb === 'function') cancelCb();
   }
 
-  cancelBtn.addEventListener('click', close);
-  overlay.addEventListener('click', function (e) { if (e.target === overlay) close(); });
+  cancelBtn.addEventListener('click', function () { close(true); });
+  overlay.addEventListener('click', function (e) { if (e.target === overlay) close(true); });
   deleteBtn.addEventListener('click', function () {
     var cb = pendingCallback;
-    close();
+    close(false);
     if (typeof cb === 'function') cb();
   });
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && overlay.classList.contains('active')) close();
+    if (e.key === 'Escape' && overlay.classList.contains('active')) close(true);
   });
 });
 
