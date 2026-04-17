@@ -2336,6 +2336,74 @@
   header .gear-btn { display: none; }
   header { padding: 18px 0 10px; }
   header h1 { font-size: 22px; }
+
+  /* === 削除確認ポップアップ === */
+  .delete-confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+  }
+  .delete-confirm-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .delete-confirm-dialog {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px 20px 18px;
+    width: 100%;
+    max-width: 320px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    text-align: center;
+  }
+  .delete-confirm-dialog .dc-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #333;
+    margin: 0 0 6px;
+    line-height: 1.4;
+  }
+  .delete-confirm-dialog .dc-name {
+    font-size: 14px;
+    color: #8b4513;
+    margin: 0 0 18px;
+    word-break: break-all;
+  }
+  .delete-confirm-dialog .dc-actions {
+    display: flex;
+    gap: 10px;
+  }
+  .delete-confirm-dialog .dc-actions button {
+    flex: 1;
+    min-height: 44px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+  }
+  .delete-confirm-dialog .dc-cancel {
+    background: #f0f0f0;
+    color: #555;
+  }
+  .delete-confirm-dialog .dc-cancel:active {
+    background: #e0e0e0;
+  }
+  .delete-confirm-dialog .dc-delete {
+    background: #e53935;
+    color: #fff;
+  }
+  .delete-confirm-dialog .dc-delete:active {
+    background: #c62828;
+  }
 </style>
 </head>
 <body>
@@ -2649,7 +2717,7 @@ function renderHistory() {
       }
     });
   });
-  // 1 件ずつ削除（アンドゥ対応）
+  // 1 件ずつ削除（確認ポップアップ対応）
   container.querySelectorAll('.history-item-del').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -2657,29 +2725,30 @@ function renderHistory() {
       const list = loadHistory();
       const entry = list[idx];
       if (!entry) return;
-      list.splice(idx, 1);
-      saveHistory(list);
-      renderHistory();
-      try {
-        const modal = document.getElementById('history-modal');
-        if (modal && modal.classList.contains('active') && typeof window.openHistoryModal === 'function') {
-          window.openHistoryModal();
-        }
-      } catch (_) {}
-      if (typeof window.showSnackbar === 'function') {
-        window.showSnackbar('「' + (entry.name || 'レシピ') + '」を削除しました', {
-          onAction: function () {
-            const curr = loadHistory();
-            const insertAt = Math.min(idx, curr.length);
-            curr.splice(insertAt, 0, entry);
-            saveHistory(curr);
-            renderHistory();
-            try {
-              const modal = document.getElementById('history-modal');
-              if (modal && modal.classList.contains('active')) window.openHistoryModal();
-            } catch (_) {}
+      const doDelete = function () {
+        const freshList = loadHistory();
+        // idx が変わっている可能性があるので名前+日付で再検索
+        let targetIdx = -1;
+        for (let i = 0; i < freshList.length; i++) {
+          if (freshList[i].name === entry.name && freshList[i].date === entry.date) {
+            targetIdx = i; break;
           }
-        });
+        }
+        if (targetIdx === -1) return;
+        freshList.splice(targetIdx, 1);
+        saveHistory(freshList);
+        renderHistory();
+        try {
+          const modal = document.getElementById('history-modal');
+          if (modal && modal.classList.contains('active') && typeof window.openHistoryModal === 'function') {
+            window.openHistoryModal();
+          }
+        } catch (_) {}
+      };
+      if (typeof window.showDeleteConfirm === 'function') {
+        window.showDeleteConfirm(entry.name || 'レシピ', doDelete);
+      } else {
+        doDelete();
       }
     });
   });
@@ -5553,9 +5622,32 @@ renderFridge();
 
   var DEFAULT_TAGS = ['作り置き', '時短', '子供用', '主菜', '副菜', '節約'];
   // フィルタ用: お気に入りに実際に登録されているタグのみ
+  var AUTO_TAG_RULES = [
+    { tag: '時短', re: /時短|簡単|5分|10分|15分|パパッと|ぱぱっと|手軽/ },
+    { tag: '作り置き', re: /作り置き|常備菜|保存|ストック/ },
+    { tag: '子供用', re: /子供|こども|キッズ|お子|離乳|幼児/ },
+    { tag: '主菜', re: /メイン|主菜|ステーキ|焼肉|ハンバーグ|唐揚げ|から揚げ|カツ|とんかつ|生姜焼き|炒め|煮込み|グリル/ },
+    { tag: '副菜', re: /副菜|サラダ|和え物|おひたし|浅漬|マリネ|ナムル|小鉢/ },
+    { tag: '節約', re: /節約|もやし|豆腐|豆苗|ちくわ/ },
+    { tag: 'スープ', re: /スープ|汁|味噌汁|ポタージュ|シチュー/ },
+    { tag: '丼もの', re: /丼|どんぶり/ },
+    { tag: '麺類', re: /パスタ|うどん|そば|ラーメン|焼きそば|麺/ }
+  ];
+  function autoTagsForRecipe(recipe) {
+    if (!recipe) return [];
+    var text = (recipe.name || '') + ' ' + (recipe.summary || '') + ' ' + (recipe.description || '');
+    var tags = [];
+    AUTO_TAG_RULES.forEach(function (rule) {
+      if (rule.re.test(text)) tags.push(rule.tag);
+    });
+    return tags;
+  }
   function allTagsIn(favorites) {
     var set = {};
-    favorites.forEach(function (f) { (f.tags || []).forEach(function (t) { if (t) set[t] = true; }); });
+    favorites.forEach(function (f) {
+      (f.tags || []).forEach(function (t) { if (t) set[t] = true; });
+      autoTagsForRecipe(f.recipe).forEach(function (t) { set[t] = true; });
+    });
     return Object.keys(set);
   }
   // タグピッカー用: デフォルト + 既存タグ
@@ -5621,7 +5713,8 @@ renderFridge();
     var filtered = favorites;
     if (activeCols.length > 0) {
       filtered = favorites.filter(function (f) {
-        var ft = f.tags || [];
+        var ft = (f.tags || []).slice();
+        autoTagsForRecipe(f.recipe).forEach(function (t) { if (ft.indexOf(t) === -1) ft.push(t); });
         for (var i = 0; i < activeCols.length; i++) {
           if (ft.indexOf(activeCols[i]) !== -1) return true;
         }
@@ -5640,7 +5733,9 @@ renderFridge();
         var thumb = img
           ? '<div class="fav-thumb"><img src="' + htmlEscape(img) + '" alt="' + htmlEscape(name) + '" loading="lazy"></div>'
           : '<div class="fav-thumb">' + emoji + '</div>';
-        var tagsHtml = (entry.tags || []).map(function (t) { return '<span class="fav-tag-chip">#' + htmlEscape(t) + '</span>'; }).join('');
+        var allEntryTags = (entry.tags || []).slice();
+        autoTagsForRecipe(entry.recipe).forEach(function (t) { if (allEntryTags.indexOf(t) === -1) allEntryTags.push(t); });
+        var tagsHtml = allEntryTags.map(function (t) { return '<span class="fav-tag-chip">#' + htmlEscape(t) + '</span>'; }).join('');
         return '<div class="fav-card" data-id="' + htmlEscape(entry.id) + '">'
           + '<button type="button" class="fav-tag-btn" data-id="' + htmlEscape(entry.id) + '" aria-label="タグを編集" title="タグを編集">🏷️</button>'
           + '<button type="button" class="fav-del" data-id="' + htmlEscape(entry.id) + '" aria-label="削除">×</button>'
@@ -5728,13 +5823,16 @@ renderFridge();
         var favs = loadFavorites();
         var entry = favs.find(function (f) { return f.id === id; });
         if (!entry) return;
-        removeFavoriteById(id);
-        updateFavButtonInResult();
-        window.showSnackbar && window.showSnackbar('「' + (entry.recipe && entry.recipe.name || 'レシピ') + '」を削除しました', {
-          onAction: function () {
-            var l2 = loadFavorites(); l2.unshift(entry); saveFavorites(l2); window.renderFavorites();
-          }
-        });
+        var recipeName = (entry.recipe && entry.recipe.name) || 'レシピ';
+        if (typeof window.showDeleteConfirm === 'function') {
+          window.showDeleteConfirm(recipeName, function () {
+            removeFavoriteById(id);
+            updateFavButtonInResult();
+          });
+        } else {
+          removeFavoriteById(id);
+          updateFavButtonInResult();
+        }
       });
     });
     container.querySelectorAll('.fav-tag-btn').forEach(function (b) {
@@ -5743,6 +5841,29 @@ renderFridge();
         openTagPicker(b.getAttribute('data-id'));
       });
     });
+
+    // スワイプ左で削除（お気に入りカード）
+    if (typeof window.attachSwipe === 'function') {
+      container.querySelectorAll('.fav-card').forEach(function (card) {
+        if (card._swipeBound) return;
+        var id = card.getAttribute('data-id');
+        window.attachSwipe(card, {
+          leftHint: '削除',
+          onLeft: function () {
+            var favs = loadFavorites();
+            var entry = favs.find(function (f) { return f.id === id; });
+            if (!entry) return;
+            var recipeName = (entry.recipe && entry.recipe.name) || 'レシピ';
+            if (typeof window.showDeleteConfirm === 'function') {
+              window.showDeleteConfirm(recipeName, function () {
+                removeFavoriteById(id);
+                updateFavButtonInResult();
+              });
+            }
+          }
+        });
+      });
+    }
   };
 
   // ===== 履歴モーダル制御 =====
@@ -5781,6 +5902,66 @@ renderFridge();
           }
         });
       });
+      // 履歴モーダル内の削除ボタンを再配線（要件2修正）
+      body.querySelectorAll('.history-item-del').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var idx = parseInt(btn.dataset.idx, 10);
+          var list = (typeof loadHistory === 'function') ? loadHistory() : [];
+          var entry = list[idx];
+          if (!entry) return;
+          var name = entry.name || 'レシピ';
+          if (typeof window.showDeleteConfirm === 'function') {
+            window.showDeleteConfirm(name, function () {
+              var freshList = loadHistory();
+              // idx が変わっている可能性があるので名前+日付で再検索
+              var targetIdx = -1;
+              for (var i = 0; i < freshList.length; i++) {
+                if (freshList[i].name === entry.name && freshList[i].date === entry.date) {
+                  targetIdx = i; break;
+                }
+              }
+              if (targetIdx === -1) return;
+              freshList.splice(targetIdx, 1);
+              saveHistory(freshList);
+              renderHistory();
+              window.openHistoryModal();
+            });
+          }
+        });
+      });
+      // 履歴アイテムにスワイプ左で削除を追加（要件3）
+      if (typeof window.attachSwipe === 'function') {
+        body.querySelectorAll('.history-item').forEach(function (item) {
+          if (item._swipeBound) return;
+          window.attachSwipe(item, {
+            leftHint: '削除',
+            onLeft: function () {
+              var idx = parseInt(item.dataset.idx, 10);
+              var list = (typeof loadHistory === 'function') ? loadHistory() : [];
+              var entry = list[idx];
+              if (!entry) return;
+              var name = entry.name || 'レシピ';
+              if (typeof window.showDeleteConfirm === 'function') {
+                window.showDeleteConfirm(name, function () {
+                  var freshList = loadHistory();
+                  var targetIdx = -1;
+                  for (var i = 0; i < freshList.length; i++) {
+                    if (freshList[i].name === entry.name && freshList[i].date === entry.date) {
+                      targetIdx = i; break;
+                    }
+                  }
+                  if (targetIdx === -1) return;
+                  freshList.splice(targetIdx, 1);
+                  saveHistory(freshList);
+                  renderHistory();
+                  window.openHistoryModal();
+                });
+              }
+            }
+          });
+        });
+      }
     }
     modal.classList.add('active');
   };
@@ -6437,9 +6618,54 @@ renderFridge();
   }
 })();
 
+
+// === 削除確認ポップアップ制御 ===
+// HTMLがscript後にあるためDOMContentLoaded後に初期化
+document.addEventListener('DOMContentLoaded', function () {
+  var overlay = document.getElementById('delete-confirm');
+  var nameEl = document.getElementById('dc-recipe-name');
+  var cancelBtn = document.getElementById('dc-cancel-btn');
+  var deleteBtn = document.getElementById('dc-delete-btn');
+  if (!overlay || !nameEl || !cancelBtn || !deleteBtn) return;
+
+  var pendingCallback = null;
+
+  window.showDeleteConfirm = function (recipeName, onConfirm) {
+    nameEl.textContent = recipeName || '';
+    pendingCallback = onConfirm || null;
+    overlay.classList.add('active');
+  };
+
+  function close() {
+    overlay.classList.remove('active');
+    pendingCallback = null;
+  }
+
+  cancelBtn.addEventListener('click', close);
+  overlay.addEventListener('click', function (e) { if (e.target === overlay) close(); });
+  deleteBtn.addEventListener('click', function () {
+    var cb = pendingCallback;
+    close();
+    if (typeof cb === 'function') cb();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && overlay.classList.contains('active')) close();
+  });
+});
+
 </script>
 
 <div id="mobile-cta-bar" aria-label="主要アクション"><button type="button" class="cta-main" id="cta-generate">🍳 おまかせでレシピ</button><div class="cta-seg" role="group" aria-label="別メニュー"><button type="button" id="cta-meal" aria-label="1食分の献立">🍱<br>1食</button><button type="button" id="cta-weekly" aria-label="1週間分の献立">📅<br>1週間</button></div></div>
 <div id="undo-snackbar" role="status" aria-live="polite"><span class="sb-msg"></span><button type="button" class="sb-action">元に戻す</button></div>
+<div id="delete-confirm" class="delete-confirm-overlay" role="dialog" aria-modal="true">
+  <div class="delete-confirm-dialog">
+    <div class="dc-title">このレシピを削除しますか？</div>
+    <div class="dc-name" id="dc-recipe-name"></div>
+    <div class="dc-actions">
+      <button type="button" class="dc-cancel" id="dc-cancel-btn">元に戻す</button>
+      <button type="button" class="dc-delete" id="dc-delete-btn">削除</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
