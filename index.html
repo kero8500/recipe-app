@@ -1581,11 +1581,10 @@
   }
   .fav-collection-bar {
     display: flex;
+    flex-wrap: wrap;
     gap: 6px;
-    overflow-x: auto;
     padding: 4px 0 8px;
     margin-bottom: 6px;
-    scrollbar-width: thin;
   }
   .fav-collection-bar::-webkit-scrollbar { height: 4px; }
   .fav-collection-bar button {
@@ -5638,13 +5637,23 @@ renderFridge();
     { tag: '主菜', re: /メイン|主菜|ステーキ|焼肉|ハンバーグ|唐揚げ|から揚げ|カツ|とんかつ|生姜焼き|炒め|煮込み|グリル/ },
     { tag: '副菜', re: /副菜|サラダ|和え物|おひたし|浅漬|マリネ|ナムル|小鉢/ },
     { tag: '節約', re: /節約|もやし|豆腐|豆苗|ちくわ/ },
-    { tag: 'スープ', re: /スープ|汁|味噌汁|ポタージュ|シチュー/ },
+    { tag: 'スープ', re: /スープ|汁|味噌汁|ポタージュ|シチュー|雑煮|お雑煮/ },
     { tag: '丼もの', re: /丼|どんぶり/ },
-    { tag: '麺類', re: /パスタ|うどん|そば|ラーメン|焼きそば|麺/ }
+    { tag: '麺類', re: /パスタ|うどん|そば|ラーメン|焼きそば|麺/ },
+    { tag: '魚料理', re: /鮭|サーモン|鯖|さば|マグロ|まぐろ|鯛|たい|鰤|ぶり|鰹|かつお|えび|海老|イカ|いか|たこ|タコ|貝|しらす|あじ|アジ|秋刀魚|さんま|照焼|煮魚|刺身|寿司|魚|干物|ツナ|ほっけ/ },
+    { tag: '肉料理', re: /鶏|チキン|豚|ポーク|牛|ビーフ|ベーコン|ソーセージ|ウインナー|ラム|羊|鳥|もも肉|むね肉|ささみ|手羽|ひき肉|挽き肉|ミンチ|照り焼き|照焼/ },
+    { tag: '野菜料理', re: /野菜|ベジ|大根|人参|にんじん|キャベツ|白菜|ほうれん草|小松菜|ブロッコリー|トマト|なす|ナス|きゅうり|ピーマン|玉ねぎ|じゃがいも|かぼちゃ|ごぼう|れんこん|わかめ/ },
+    { tag: '和食', re: /和風|味噌|醤油|煮物|焼き魚|おにぎり|雑煮|漬け|出汁|だし|照り焼き|天ぷら|てんぷら|照焼|いりこ|おひたし|いなり|いなり寿司|筑前煮|ひじき/ },
+    { tag: '洋食', re: /グラタン|ドリア|オムライス|ピザ|リゾット|クリーム|チーズ|バター|フライ|コロッケ|ポトフ|ビーフシチュー|ハンバーグ|ミートソース/ },
+    { tag: '中華', re: /中華|麻婆|チャーハン|炒飯|餃子|ギョーザ|春巻|エビチリ|酢豚|回鍋肉|八宝菜|シュウマイ|焼売|青椒肉絲|エビマヨ|ホイコーロー/ },
+    { tag: 'ごはんもの', re: /ごはん|ご飯|めし|飯|ライス|チャーハン|ピラフ|オムライス|リゾット|雑炊|おにぎり|おかゆ/ }
   ];
   function autoTagsForRecipe(recipe) {
     if (!recipe) return [];
     var text = (recipe.name || '') + ' ' + (recipe.summary || '') + ' ' + (recipe.description || '');
+    if (Array.isArray(recipe.ingredients)) {
+      recipe.ingredients.forEach(function (ing) { if (ing && ing.name) text += ' ' + ing.name; });
+    }
     var tags = [];
     AUTO_TAG_RULES.forEach(function (rule) {
       if (rule.re.test(text)) tags.push(rule.tag);
