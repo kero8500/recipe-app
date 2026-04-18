@@ -2784,7 +2784,7 @@
 
   <div id="panel-fridge" class="panel">
     <div class="card">
-      <h3 style="margin:0 0 10px; color:#e8590c; font-size:18px;">🧊 冷蔵庫の在庫</h3>
+      <h3 style="margin:0 0 10px; color:#e8590c; font-size:18px;">冷蔵庫の在庫</h3>
       <div class="remix-hint">食材・数量・賞味期限を登録。期限が近いものは強調表示されます。最大100件。</div>
       <div class="fridge-add-row">
         <input type="text" id="fridge-name" placeholder="食材名（例：鶏肉）" aria-label="食材名">
@@ -2810,7 +2810,7 @@
   <div id="history-container"></div>
   <div id="panel-my-recipes" class="panel" style="display:none;">
     <div class="card">
-      <h3 style="margin:0 0 10px;color:#e8590c;font-size:18px;">📝 レシピ登録</h3>
+      <h3 style="margin:0 0 10px;color:#e8590c;font-size:18px;">レシピ登録</h3>
       <div class="remix-hint">自分だけのオリジナルレシピを登録できます。画像・動画も添付可能（各10MBまで）。</div>
       <div class="my-recipes-header">
         <button type="button" class="fav-history-btn" id="open-my-recipes-modal">📋 登録済レシピ (<span id="my-recipes-count">0</span>)</button>
@@ -2852,7 +2852,7 @@
   <div id="history-modal" class="history-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="history-modal-title">
     <div class="history-modal">
       <div class="history-modal-head">
-        <h3 id="history-modal-title">📋 履歴</h3>
+        <h3 id="history-modal-title">履歴</h3>
         <button type="button" class="history-modal-close" id="history-modal-close" aria-label="閉じる">×</button>
       </div>
       <div class="history-modal-body" id="history-modal-body"></div>
@@ -2863,7 +2863,7 @@
   <div id="my-recipes-modal" class="history-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="my-recipes-modal-title">
     <div class="history-modal">
       <div class="history-modal-head">
-        <h3 id="my-recipes-modal-title">📋 登録済レシピ</h3>
+        <h3 id="my-recipes-modal-title">登録済レシピ</h3>
         <button type="button" class="history-modal-close my-recipes-modal-close-text" id="my-recipes-modal-close" aria-label="閉じる">閉じる</button>
       </div>
       <div class="history-modal-body" id="my-recipes-modal-body"></div>
@@ -3046,7 +3046,7 @@ function renderHistory() {
   container.innerHTML = `
     <div class="card history-section">
       <div class="section-header">
-        <h3>📋 履歴（${history.length}）</h3>
+        <h3>履歴（${history.length}）</h3>
         <button class="history-clear-btn" id="clear-history">全て削除</button>
       </div>
       <div class="history-list">${items}</div>
@@ -3214,7 +3214,7 @@ function renderFavorites() {
   container.innerHTML = `
     <div class="card favorites-section">
       <div class="section-header">
-        <h3>⭐ お気に入り</h3>
+        <h3>お気に入り</h3>
         <button class="fav-clear-btn" id="clear-favorites">全て削除</button>
       </div>
       ${items}
@@ -3400,7 +3400,7 @@ function renderShoppingList() {
   container.innerHTML = `
     <div class="card shopping-section">
       <div class="section-header">
-        <h3>🛒 買い物リスト（${list.length}品）</h3>
+        <h3>買い物リスト（${list.length}品）</h3>
         <div class="shop-actions">
           ${clearCheckedBtn}
           <button class="shop-clear-btn" id="clear-shopping">全て削除</button>
@@ -6042,7 +6042,7 @@ renderFridge();
     container.innerHTML = ''
       + '<div class="card shopping-section">'
         + '<div class="section-header">'
-          + '<h3>🛒 買い物リスト（' + total + '品）</h3>'
+          + '<h3>買い物リスト（' + total + '品）</h3>'
           + '<div class="shop-actions">'
             + clearCheckedBtn
             + clearAllBtn
@@ -6404,7 +6404,7 @@ renderFridge();
       + '<div class="card favorites-section">'
         + '<div class="fav-sticky-header">'
           + '<div class="section-header">'
-            + '<h3>⭐ お気に入り（' + favorites.length + '）</h3>'
+            + '<h3>お気に入り（' + favorites.length + '）</h3>'
             + '<div class="fav-header-actions">'
               + (favorites.length > 0 ? '<button class="fav-clear-btn" id="clear-favorites">全て削除</button>' : '')
             + '</div>'
@@ -7410,7 +7410,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var titleEl = document.getElementById('my-recipes-modal-title');
     if (!body) return;
     var list = load();
-    if (titleEl) titleEl.textContent = '📋 登録済レシピ（' + list.length + '）';
+    if (titleEl) titleEl.textContent = '登録済レシピ（' + list.length + '）';
     if (!list.length) {
       body.innerHTML = '<div class="my-recipe-empty">まだレシピがありません。下のフォームから登録しましょう。</div>';
       return;
