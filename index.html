@@ -2267,7 +2267,7 @@
   .bottom-tabbar .tab {
     flex: 1 1 0;
     min-height: var(--tabbar-h);
-    min-width: var(--tap-min);
+    min-width: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -2286,13 +2286,13 @@
     line-height: 1.15;
   }
   .bottom-tabbar .tab .tab-icon {
-    font-size: 22px;
+    font-size: 20px;
     line-height: 1;
     filter: grayscale(0.15);
     opacity: 0.75;
   }
   .bottom-tabbar .tab .tab-label {
-    font-size: 11px;
+    font-size: 10px;
     letter-spacing: 0.02em;
   }
   .bottom-tabbar .tab.active {
@@ -2581,6 +2581,9 @@
   <button type="button" class="tab" data-tab="favorites" role="tab" aria-selected="false">
     <span class="tab-icon" aria-hidden="true">⭐</span><span class="tab-label">お気に入り</span>
   </button>
+  <button type="button" class="tab" data-tab="history" role="tab" aria-selected="false">
+    <span class="tab-icon" aria-hidden="true">📋</span><span class="tab-label">履歴</span>
+  </button>
   <button type="button" class="tab" data-tab="settings" role="tab" aria-selected="false">
     <span class="tab-icon" aria-hidden="true">⚙️</span><span class="tab-label">設定</span>
   </button>
@@ -2704,12 +2707,12 @@ function renderHistory() {
     <div class="card history-section">
       <div class="section-header">
         <h3>📋 履歴（${history.length}）</h3>
-        <button class="history-clear-btn" id="clear-history">履歴をクリア</button>
+        <button class="history-clear-btn" id="clear-history">全て削除</button>
       </div>
       <div class="history-list">${items}</div>
     </div>
   `;
-  document.getElementById('clear-history').addEventListener('click', clearHistory);
+  document.getElementById('clear-history').addEventListener('click', function() { if (confirm('履歴を全て削除しますか？')) clearHistory(); });
   container.querySelectorAll('.history-item').forEach(item => {
     item.addEventListener('click', (e) => {
       if (e.target.closest('button')) return;
@@ -2872,13 +2875,13 @@ function renderFavorites() {
     <div class="card favorites-section">
       <div class="section-header">
         <h3>⭐ お気に入り</h3>
-        <button class="fav-clear-btn" id="clear-favorites">すべてクリア</button>
+        <button class="fav-clear-btn" id="clear-favorites">全て削除</button>
       </div>
       ${items}
     </div>
   `;
   document.getElementById('clear-favorites').addEventListener('click', () => {
-    if (confirm('お気に入りをすべて削除しますか？')) {
+    if (confirm('お気に入りを全て削除しますか？')) {
       clearFavorites();
       updateFavButtonInResult();
     }
@@ -3060,7 +3063,7 @@ function renderShoppingList() {
         <h3>🛒 買い物リスト（${list.length}品）</h3>
         <div class="shop-actions">
           ${clearCheckedBtn}
-          <button class="shop-clear-btn" id="clear-shopping">リストをクリア</button>
+          <button class="shop-clear-btn" id="clear-shopping">全て削除</button>
         </div>
       </div>
       ${items}
@@ -3069,7 +3072,7 @@ function renderShoppingList() {
 
   // Event: clear all
   document.getElementById('clear-shopping').addEventListener('click', () => {
-    if (confirm('買い物リストをすべてクリアしますか？')) {
+    if (confirm('買い物リストを全て削除しますか？')) {
       clearShoppingList();
     }
   });
@@ -5516,7 +5519,7 @@ renderFridge();
           + '<h3>🛒 買い物リスト（' + total + '品）</h3>'
           + '<div class="shop-actions">'
             + clearCheckedBtn
-            + '<button class="shop-clear-btn" id="clear-shopping">リストをクリア</button>'
+            + '<button class="shop-clear-btn" id="clear-shopping">全て削除</button>'
           + '</div>'
         + '</div>'
         + '<div class="shop-share-row">'
@@ -5543,7 +5546,7 @@ renderFridge();
     // Wire handlers (same as original)
     var clearAll = document.getElementById('clear-shopping');
     if (clearAll) clearAll.addEventListener('click', function () {
-      if (confirm('買い物リストをすべてクリアしますか？')) clearShoppingList();
+      if (confirm('買い物リストを全て削除しますか？')) clearShoppingList();
     });
     var clearChk = document.getElementById('clear-checked-shopping');
     if (clearChk) clearChk.addEventListener('click', function () { removeCheckedShoppingItems(); });
@@ -5776,8 +5779,7 @@ renderFridge();
           + '<div class="section-header">'
             + '<h3>⭐ お気に入り（' + favorites.length + '）</h3>'
             + '<div class="fav-header-actions">'
-              + '<button type="button" class="fav-history-btn" id="open-history-modal" aria-label="履歴を見る">📋 履歴</button>'
-              + (favorites.length > 0 ? '<button class="fav-clear-btn" id="clear-favorites">すべてクリア</button>' : '')
+              + (favorites.length > 0 ? '<button class="fav-clear-btn" id="clear-favorites">全て削除</button>' : '')
             + '</div>'
           + '</div>'
           + colBar
@@ -5801,18 +5803,11 @@ renderFridge();
       });
     });
 
-    // 履歴ボタンのラベル件数を最新化
-    try { if (typeof updateHistoryButtonLabel === 'function') updateHistoryButtonLabel(); } catch (_) {}
-    // 履歴モーダルを開く
-    var openHistBtn = document.getElementById('open-history-modal');
-    if (openHistBtn) openHistBtn.addEventListener('click', function () {
-      if (typeof window.openHistoryModal === 'function') window.openHistoryModal();
-    });
 
     // Fav actions
     var clearBtn = document.getElementById('clear-favorites');
     if (clearBtn) clearBtn.addEventListener('click', function () {
-      if (confirm('お気に入りをすべて削除しますか？')) { clearFavorites(); updateFavButtonInResult(); }
+      if (confirm('お気に入りを全て削除しますか？')) { clearFavorites(); updateFavButtonInResult(); }
     });
     container.querySelectorAll('.fav-card').forEach(function (card) {
       var id = card.getAttribute('data-id');
@@ -5908,7 +5903,7 @@ renderFridge();
       // モーダル内のクリア履歴ボタンを再配線
       var clearH = body.querySelector('#clear-history');
       if (clearH) clearH.addEventListener('click', function () {
-        if (confirm('履歴をすべて削除しますか？')) {
+        if (confirm('履歴を全て削除しますか？')) {
           if (typeof clearHistory === 'function') clearHistory();
           window.openHistoryModal();
         }
@@ -6352,6 +6347,7 @@ renderFridge();
     fridge: ['#panel-fridge'],
     shopping: ['#shopping-container'],
     favorites: ['#favorites-container'],
+    history: ['#history-container'],
   };
 
   // お気に入りタブや買い物タブでも空の時でも見栄えが良いよう、空時メッセージを表示する
@@ -6423,23 +6419,29 @@ renderFridge();
     if (tabName === 'shopping' && typeof window.renderShoppingList === 'function') {
       try { window.renderShoppingList(); } catch (_) {}
     }
+    if (tabName === 'history') {
+      // Render history directly in #history-container (as a tab, not modal)
+      try { if (typeof renderHistory === 'function') renderHistory(); } catch (_) {}
+    }
 
     // 空時のヒント表示（お気に入りコンテナが空のとき）
     if (tabName === 'favorites') {
       var favEl = document.getElementById('favorites-container');
       if (favEl && !favEl.innerHTML.trim()) {
-        favEl.innerHTML = '<div class="card"><div style="padding:20px;text-align:center;color:#6b4423;font-size:15px;">⭐ お気に入りはまだありません。<br><span style="font-size:13px;">レシピ画面でハートを押すと保存されます。</span></div><div style="text-align:center;padding-bottom:16px;"><button type="button" class="fav-history-btn" id="open-history-modal-empty">📋 履歴</button></div></div>';
-        var emptyBtn = document.getElementById('open-history-modal-empty');
-        if (emptyBtn) emptyBtn.addEventListener('click', function () {
-          if (typeof window.openHistoryModal === 'function') window.openHistoryModal();
-        });
-        try { if (typeof updateHistoryButtonLabel === 'function') updateHistoryButtonLabel(); } catch (_) {}
+        favEl.innerHTML = '<div class="card"><div style="padding:20px;text-align:center;color:#6b4423;font-size:15px;">⭐ お気に入りはまだありません。<br><span style="font-size:13px;">レシピ画面でハートを押すと保存されます。</span></div></div>';
+        // (history button removed - now a tab)
       }
     }
     if (tabName === 'shopping') {
       var shopEl = document.getElementById('shopping-container');
       if (shopEl && !shopEl.innerHTML.trim()) {
         shopEl.innerHTML = '<div class="card"><div style="padding:20px;text-align:center;color:#6b4423;font-size:15px;">🛒 買い物リストは空です。<br><span style="font-size:13px;">レシピから食材を追加できます。</span></div></div>';
+      }
+    }
+    if (tabName === 'history') {
+      var histEl = document.getElementById('history-container');
+      if (histEl && !histEl.innerHTML.trim()) {
+        histEl.innerHTML = '<div class="card"><div style="padding:24px 12px;text-align:center;color:#6b4423;font-size:15px;">📋 履歴はまだありません。<br><span style="font-size:13px;">レシピを生成すると履歴に記録されます。</span></div></div>';
       }
     }
 
@@ -6469,9 +6471,10 @@ renderFridge();
       var f = document.getElementById('favorites-container');
       if (f) f.style.display = 'none';
     }
-    // 履歴コンテナは常に非表示（履歴はモーダル表示のみ）
-    var h = document.getElementById('history-container');
-    if (h) h.style.display = 'none';
+    if (tabName !== 'history') {
+      var h = document.getElementById('history-container');
+      if (h) h.style.display = 'none';
+    }
     if (tabName !== 'shopping') {
       var s = document.getElementById('shopping-container');
       if (s) s.style.display = 'none';
