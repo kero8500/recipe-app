@@ -890,8 +890,8 @@
     border:1px solid #ffd4b0; cursor:pointer; font-size:14px; font-weight:600;
   }
   .my-recipe-file-btn:hover { background:#ffe8d6; }
-  .my-recipe-preview-img img { max-width:100px; max-height:100px; border-radius:8px; margin-top:8px; object-fit:cover; display:block; }
-  .my-recipe-preview-video video { width:100%; max-height:240px; border-radius:8px; margin-top:8px; background:#000; display:block; }
+  .my-recipe-preview-img img { max-width:100%; max-height:200px; border-radius:8px; margin-top:8px; object-fit:contain; display:block; }
+  .my-recipe-preview-video video { max-width:100%; width:100%; max-height:240px; border-radius:8px; margin-top:8px; background:#000; display:block; }
   .my-recipe-item {
     display:flex; align-items:center; gap:10px;
     padding:10px; background:#fff; border:1px solid #ffd4b0; border-radius:12px; margin-bottom:8px;
@@ -902,10 +902,13 @@
   }
   .my-recipe-item-thumb img { width:100%; height:100%; object-fit:cover; }
   .my-recipe-item-name { flex:1; font-weight:600; color:#6b4423; cursor:pointer; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .my-recipe-item-actions { display:flex; gap:4px; flex-shrink:0; }
+  .my-recipe-item-actions { display:flex; gap:0; flex-shrink:0; align-items:center; }
+  .my-recipe-item-actions .fridge-edit-btn + .fridge-delete-btn { margin-left: -4px; }
   .my-recipe-item-actions button { padding:6px 10px; border-radius:8px; border:1px solid #ffd4b0; background:#fff; cursor:pointer; font-size:14px; }
   .my-recipe-item-actions button:hover { background:#fff3e6; }
   .my-recipe-empty { padding:14px; text-align:center; color:#6b4423; font-size:13px; }
+  .my-recipes-header { display:flex; justify-content:flex-end; margin:4px 0 10px; }
+  .my-recipes-header .fav-history-btn { font-size:13px; padding:6px 12px; }
   .my-recipe-detail-overlay {
     position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1100;
     display:none; align-items:center; justify-content:center; padding:16px;
@@ -1557,6 +1560,13 @@
   /* Panels */
   .panel { display: none; }
   .panel.active { display: block; }
+  #panel-my-recipes.active {
+    display: block;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    height: auto;
+    touch-action: pan-y;
+  }
 
   /* === Phase 1: Mobile UX (Sticky CTA / Swipe / Snackbar / Voice) === */
   /* Sticky CTA bar */
@@ -1730,13 +1740,20 @@
     font-size: 16px;
   }
   .voice-wrap-inline {
-    display: flex;
-    gap: 6px;
-    align-items: center;
+    position: relative;
+    display: block;
   }
-  .voice-wrap-inline input { flex: 1; }
+  .voice-wrap-inline input {
+    width: 100%;
+    box-sizing: border-box;
+    padding-right: 48px;
+  }
   .voice-wrap-inline .voice-input-btn {
-    width: 44px; height: 44px; min-width: 44px; min-height: 44px;
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 36px; height: 36px; min-width: 36px; min-height: 36px;
     font-size: 16px; flex-shrink: 0;
   }
 
@@ -2779,7 +2796,9 @@
     <div class="card">
       <h3 style="margin:0 0 10px;color:#e8590c;font-size:18px;">📝 レシピ登録</h3>
       <div class="remix-hint">自分だけのオリジナルレシピを登録できます。画像・動画も添付可能（各10MBまで）。</div>
-      <div id="my-recipes-list"></div>
+      <div class="my-recipes-header">
+        <button type="button" class="fav-history-btn" id="open-my-recipes-modal">📋 登録済レシピ (<span id="my-recipes-count">0</span>)</button>
+      </div>
       <h4 style="margin:18px 0 8px;color:#6b4423;font-size:15px;" id="my-recipe-form-title">新規登録</h4>
       <div class="fridge-add-row">
         <div class="voice-wrap-inline">
@@ -2821,6 +2840,17 @@
         <button type="button" class="history-modal-close" id="history-modal-close" aria-label="閉じる">×</button>
       </div>
       <div class="history-modal-body" id="history-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- 登録済レシピ一覧モーダル -->
+  <div id="my-recipes-modal" class="history-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="my-recipes-modal-title">
+    <div class="history-modal">
+      <div class="history-modal-head">
+        <h3 id="my-recipes-modal-title">📋 登録済レシピ</h3>
+        <button type="button" class="history-modal-close" id="my-recipes-modal-close" aria-label="閉じる">×</button>
+      </div>
+      <div class="history-modal-body" id="my-recipes-modal-body"></div>
     </div>
   </div>
 
@@ -7329,14 +7359,27 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function renderList() {
-    var el = document.getElementById('my-recipes-list');
-    if (!el) return;
+    // ヘッダーのカウント更新のみ（一覧はモーダルで描画）
     var list = load();
+    var c = document.getElementById('my-recipes-count');
+    if (c) c.textContent = list.length;
+    // モーダルが開いている場合は中身も更新
+    var modal = document.getElementById('my-recipes-modal');
+    if (modal && modal.classList.contains('active')) {
+      renderModalList();
+    }
+  }
+  function renderModalList() {
+    var body = document.getElementById('my-recipes-modal-body');
+    var titleEl = document.getElementById('my-recipes-modal-title');
+    if (!body) return;
+    var list = load();
+    if (titleEl) titleEl.textContent = '📋 登録済レシピ（' + list.length + '）';
     if (!list.length) {
-      el.innerHTML = '<div class="my-recipe-empty">まだレシピがありません。下のフォームから登録しましょう。</div>';
+      body.innerHTML = '<div class="my-recipe-empty">まだレシピがありません。下のフォームから登録しましょう。</div>';
       return;
     }
-    el.innerHTML = list.map(function (r) {
+    body.innerHTML = list.map(function (r) {
       var thumb = r.imageUrl
         ? '<div class="my-recipe-item-thumb"><img src="' + esc(r.imageUrl) + '" alt=""></div>'
         : '<div class="my-recipe-item-thumb">🍳</div>';
@@ -7344,12 +7387,23 @@ document.addEventListener('DOMContentLoaded', function () {
         + thumb
         + '<div class="my-recipe-item-name" data-action="view">' + esc(r.name || '(無題)') + '</div>'
         + '<div class="my-recipe-item-actions">'
-        +   '<button type="button" data-action="edit" aria-label="編集">✏️</button>'
-        +   '<button type="button" data-action="delete" aria-label="削除">✕</button>'
+        +   '<button type="button" class="fridge-edit-btn" data-action="edit" aria-label="' + esc(r.name || 'レシピ') + 'を編集" title="編集">✏</button>'
+        +   '<button type="button" class="shop-delete-btn fridge-delete-btn" data-action="delete" aria-label="' + esc(r.name || 'レシピ') + 'を削除">×</button>'
         + '</div></div>';
     }).join('');
   }
+  function openMyRecipesModal() {
+    var modal = document.getElementById('my-recipes-modal');
+    if (!modal) return;
+    renderModalList();
+    modal.classList.add('active');
+  }
+  function closeMyRecipesModal() {
+    var modal = document.getElementById('my-recipes-modal');
+    if (modal) modal.classList.remove('active');
+  }
   window.renderMyRecipes = renderList;
+  window.openMyRecipesModal = openMyRecipesModal;
 
   function resetForm() {
     editingId = null;
@@ -7488,22 +7542,37 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!panel || panel.dataset.initialized) return;
     panel.dataset.initialized = '1';
 
-    panel.addEventListener('click', function (e) {
-      var item = e.target.closest && e.target.closest('.my-recipe-item');
-      if (!item) return;
-      var id = item.dataset.id;
-      var action = e.target.dataset && e.target.dataset.action;
-      if (!action) {
-        var nameEl = e.target.closest('.my-recipe-item-name');
-        if (nameEl) action = 'view';
-      }
-      if (!action) return;
-      var list = load();
-      var r = list.find(function (x) { return x.id === id; });
-      if (!r) return;
-      if (action === 'view') showDetail(r);
-      else if (action === 'edit') loadToForm(r);
-      else if (action === 'delete') deleteRecipe(id);
+    // モーダル内の各アイテム操作
+    var modalBody = document.getElementById('my-recipes-modal-body');
+    if (modalBody) {
+      modalBody.addEventListener('click', function (e) {
+        var actBtn = e.target.closest && e.target.closest('[data-action]');
+        var item = e.target.closest && e.target.closest('.my-recipe-item');
+        if (!item) return;
+        var id = item.dataset.id;
+        var action = actBtn && actBtn.dataset ? actBtn.dataset.action : null;
+        if (!action) {
+          var nameEl = e.target.closest('.my-recipe-item-name');
+          if (nameEl) action = 'view';
+        }
+        if (!action) return;
+        var list = load();
+        var r = list.find(function (x) { return x.id === id; });
+        if (!r) return;
+        if (action === 'view') showDetail(r);
+        else if (action === 'edit') { closeMyRecipesModal(); loadToForm(r); }
+        else if (action === 'delete') deleteRecipe(id);
+      });
+    }
+
+    // 「📋 登録済レシピ」ボタン
+    var openBtn = document.getElementById('open-my-recipes-modal');
+    if (openBtn) openBtn.addEventListener('click', openMyRecipesModal);
+    var closeBtn2 = document.getElementById('my-recipes-modal-close');
+    if (closeBtn2) closeBtn2.addEventListener('click', closeMyRecipesModal);
+    var modal = document.getElementById('my-recipes-modal');
+    if (modal) modal.addEventListener('click', function (e) {
+      if (e.target === modal) closeMyRecipesModal();
     });
 
     var saveBtn = document.getElementById('my-recipe-save');
