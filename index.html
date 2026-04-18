@@ -778,13 +778,14 @@
   /* Fridge (inventory) */
   .fridge-item {
     display: grid;
-    grid-template-columns: auto minmax(0, 1.3fr) minmax(0, 0.6fr) auto auto;
+    grid-template-columns: auto minmax(0, 1fr) 70px 92px 40px;
     gap: 6px;
     padding: 8px 4px;
     border-bottom: 1px dashed #ffd4b0;
     align-items: center;
     font-size: 13px;
   }
+  .fridge-item > .fridge-date { text-align: right; }
   .fridge-item > div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .fridge-item > div.fridge-qty { text-align: right; }
   .fridge-item.expiring { background: #fff3e6; }
@@ -829,15 +830,24 @@
   .fridge-add-row-sub {
     display: flex;
     gap: 8px;
-    align-items: center;
+    align-items: stretch;
   }
   .fridge-add-row-sub > #fridge-amount {
     flex: 1 1 auto;
     min-width: 0;
+    height: 44px;
+    box-sizing: border-box;
   }
   .fridge-expiry-wrap {
     flex: 0 0 auto;
     height: 44px;
+  }
+  .fridge-add-row-sub > #fridge-add {
+    height: 44px !important;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
   .fridge-use-btn {
     margin-top: 10px;
@@ -4584,7 +4594,7 @@ function renderFridge() {
       '<input type="checkbox" class="fridge-item-check" data-id="' + escapeHtml(item.id) + '"' + checked + ' aria-label="' + escapeHtml(item.name) + 'を選択">' +
       '<div>' + escapeHtml(item.name) + badge + '</div>' +
       '<div class="fridge-qty" style="font-size:12px; color:#8b4513;">' + escapeHtml(item.amount || '-') + '</div>' +
-      '<div style="font-size:11px; color:#8b4513;">' + escapeHtml(item.expiry ? formatJpDate(item.expiry) : '期限なし') + '</div>' +
+      '<div class="fridge-date" style="font-size:11px; color:#8b4513;">' + escapeHtml(item.expiry ? formatJpDate(item.expiry) : '期限なし') + '</div>' +
       '<button class="shop-delete-btn fridge-delete-btn" data-id="' + escapeHtml(item.id) + '" aria-label="' + escapeHtml(item.name) + 'を削除">×</button>' +
       '</div>';
   }).join('');
