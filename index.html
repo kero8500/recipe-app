@@ -786,6 +786,7 @@
     font-size: 13px;
   }
   .fridge-item > div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fridge-item > div.fridge-qty { text-align: right; }
   .fridge-item.expiring { background: #fff3e6; }
   .fridge-item.expired { background: #ffe0e0; }
   .fridge-item input[type="text"], .fridge-item input[type="date"] {
@@ -805,8 +806,8 @@
   .fridge-badge.ok { background: #e8f5e9; color: #2e7d32; }
   /* fridge-delete-btn は .shop-delete-btn と共用（上書き不要） */
   .fridge-add-row {
-    display: grid;
-    grid-template-columns: 1.5fr 1fr 44px auto;
+    display: flex;
+    flex-direction: column;
     gap: 8px;
     margin-bottom: 10px;
     align-items: stretch;
@@ -825,19 +826,28 @@
     outline: none;
     border-color: #e8590c;
   }
+  .fridge-add-row-sub {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .fridge-add-row-sub > #fridge-amount {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
   .fridge-expiry-wrap {
-    width: 44px;
+    flex: 0 0 auto;
     height: 44px;
   }
   .fridge-use-btn {
     margin-top: 10px;
   }
-  .fridge-expiry-wrap { position: relative; display: inline-flex; align-items: center; gap: 4px; }
+  .fridge-expiry-wrap { position: relative; display: inline-flex; align-items: center; }
   .fridge-expiry-input {
     position: absolute;
     top: 0;
     left: 0;
-    width: 44px;
+    width: 100%;
     height: 44px;
     opacity: 0;
     z-index: 2;
@@ -845,9 +855,10 @@
     -webkit-appearance: none;
     appearance: none;
   }
-  .fridge-expiry-btn { width: 44px; height: 44px; min-width: 44px; border-radius: 10px; background: #fff; border: 1.5px solid #ffd4b0; color: #e8590c; font-size: 20px; line-height: 1; cursor: pointer; padding: 0; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05); box-sizing: border-box; }
+  .fridge-expiry-btn { min-width: 44px; height: 44px; border-radius: 10px; background: #fff; border: 1.5px solid #ffd4b0; color: #e8590c; font-size: 18px; line-height: 1; cursor: pointer; padding: 0 10px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); box-sizing: border-box; white-space: nowrap; }
   .fridge-expiry-btn:active { background: #ffe8d6; }
-  .fridge-expiry-btn.has-value { background: #fff3e6; border-color: #e8590c; }
+  .fridge-expiry-btn.has-value { background: #fff3e6; border-color: #e8590c; padding: 0 12px; }
+  .fridge-expiry-btn .fridge-expiry-date { font-size: 12px; font-weight: 600; color: #e8590c; }
   .fridge-expiry-display { display: none; }
   .fridge-item-check { width: 18px; height: 18px; cursor: pointer; accent-color: #e8590c; margin-right: 2px; }
   /* Cooking mode (fullscreen) */
@@ -2191,13 +2202,15 @@
     margin-right: 2px;
   }
   #fridge-add {
-    height: 44px;
-    min-height: 44px;
-    font-size: 14px !important;
-    padding: 0 18px !important;
+    height: auto;
+    min-height: 0;
+    font-size: 13px !important;
+    padding: 8px 14px !important;
     border-radius: 10px;
     white-space: nowrap;
     box-sizing: border-box;
+    width: auto;
+    flex: 0 0 auto;
   }
   .chip {
     min-height: var(--tap-min);
@@ -2565,13 +2578,15 @@
       <div class="remix-hint">食材・数量・賞味期限を登録。期限が近いものは強調表示されます。最大100件。</div>
       <div class="fridge-add-row">
         <input type="text" id="fridge-name" placeholder="食材名（例：鶏肉）" aria-label="食材名">
-        <input type="text" id="fridge-amount" placeholder="数量（例：300g）" aria-label="数量">
-        <div class="fridge-expiry-wrap">
-          <button type="button" id="fridge-expiry-btn" class="fridge-expiry-btn" aria-label="賞味期限を選択" title="賞味期限を選択">📅</button>
-          <span id="fridge-expiry-display" class="fridge-expiry-display" aria-live="polite"></span>
-          <input type="date" id="fridge-expiry" aria-label="賞味期限" class="fridge-expiry-input">
+        <div class="fridge-add-row-sub">
+          <input type="text" id="fridge-amount" placeholder="数量（例：300g）" aria-label="数量">
+          <div class="fridge-expiry-wrap">
+            <button type="button" id="fridge-expiry-btn" class="fridge-expiry-btn" aria-label="賞味期限を選択" title="賞味期限を選択"><span class="fridge-expiry-icon" aria-hidden="true">📅</span><span class="fridge-expiry-date" id="fridge-expiry-date-label"></span></button>
+            <span id="fridge-expiry-display" class="fridge-expiry-display" aria-live="polite"></span>
+            <input type="date" id="fridge-expiry" aria-label="賞味期限" class="fridge-expiry-input">
+          </div>
+          <button id="fridge-add">追加</button>
         </div>
-        <button id="fridge-add">追加</button>
       </div>
       <div id="fridge-list"></div>
       <button id="fridge-use" class="fridge-use-btn">🍳 在庫から献立を提案</button>
@@ -4568,7 +4583,7 @@ function renderFridge() {
     return '<div class="' + cls + '" data-id="' + escapeHtml(item.id) + '">' +
       '<input type="checkbox" class="fridge-item-check" data-id="' + escapeHtml(item.id) + '"' + checked + ' aria-label="' + escapeHtml(item.name) + 'を選択">' +
       '<div>' + escapeHtml(item.name) + badge + '</div>' +
-      '<div style="font-size:12px; color:#8b4513;">' + escapeHtml(item.amount || '-') + '</div>' +
+      '<div class="fridge-qty" style="font-size:12px; color:#8b4513;">' + escapeHtml(item.amount || '-') + '</div>' +
       '<div style="font-size:11px; color:#8b4513;">' + escapeHtml(item.expiry ? formatJpDate(item.expiry) : '期限なし') + '</div>' +
       '<button class="shop-delete-btn fridge-delete-btn" data-id="' + escapeHtml(item.id) + '" aria-label="' + escapeHtml(item.name) + 'を削除">×</button>' +
       '</div>';
@@ -4619,10 +4634,12 @@ function updateFridgeUseLabel() {
   var expInput = document.getElementById('fridge-expiry');
   var expDisplay = document.getElementById('fridge-expiry-display');
   function updateExpiryDisplay() {
-    if (!expInput || !expDisplay) return;
+    if (!expInput) return;
     var v = expInput.value;
     var disp = v ? (typeof formatJpDate === 'function' ? formatJpDate(v) : v) : '';
-    expDisplay.textContent = disp;
+    if (expDisplay) expDisplay.textContent = disp;
+    var dateLabel = document.getElementById('fridge-expiry-date-label');
+    if (dateLabel) dateLabel.textContent = disp;
     if (expBtn) {
       expBtn.classList.toggle('has-value', !!v);
       expBtn.title = v ? ('賞味期限: ' + disp) : '賞味期限を選択';
