@@ -947,6 +947,52 @@
   .fridge-expiry-btn .fridge-expiry-date { font-size: 12px; font-weight: 600; color: #e8590c; }
   .fridge-expiry-display { display: none; }
   .fridge-item-check { width: 18px; height: 18px; cursor: pointer; accent-color: #e8590c; margin-right: 2px; }
+  /* Shopping list manual add form (same design language as fridge-add-row) */
+  .shop-add-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 10px 0 12px;
+    align-items: stretch;
+  }
+  .shop-add-row > .shop-name-wrap { position: relative; display: block; }
+  .shop-add-row input[type="text"] {
+    height: 44px;
+    padding: 10px 12px;
+    font-size: 15px;
+    border-radius: 10px;
+    border: 1.5px solid #ffd4b0;
+    background: #fff;
+    box-sizing: border-box;
+    width: 100%;
+  }
+  .shop-add-row input[type="text"]:focus { outline: none; border-color: #e8590c; }
+  .shop-add-row input[type="text"].invalid { border-color: #d32f2f; background: #fff5f5; }
+  .shop-add-row .voice-input-btn {
+    position: absolute; top: 50%; right: 4px; transform: translateY(-50%);
+    width: 40px; height: 40px; min-width: 40px; min-height: 40px; font-size: 15px;
+    border-radius: 10px; border: 1.5px solid #ffd4b0; background: #fff; color: #e8590c; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .shop-add-row .voice-input-btn.recording { background: #ffe8d6; }
+  .shop-add-row #shop-name { padding-right: 48px; }
+  .shop-add-row-sub { display: flex; gap: 8px; align-items: stretch; }
+  .shop-add-row-sub > #shop-amount { flex: 1 1 auto; min-width: 0; height: 44px; box-sizing: border-box; }
+  .shop-add-row-sub > #shop-add {
+    height: 44px !important;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 18px;
+    border-radius: 10px;
+    background: #e8590c;
+    color: #fff;
+    border: none;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .shop-add-row-sub > #shop-add:active { background: #c04a0a; }
   /* Cooking mode (fullscreen) */
   .cooking-overlay {
     position: fixed;
@@ -5818,7 +5864,6 @@ renderFridge();
     var container = document.getElementById('shopping-container');
     if (!container) return;
     var list = loadShoppingList();
-    if (list.length === 0) { container.innerHTML = ''; return; }
     var total = list.length;
     var checkedCount = list.filter(function (i) { return i.checked; }).length;
     var grouped = sortedByCat(list);
@@ -5842,20 +5887,40 @@ renderFridge();
     var clearCheckedBtn = checkedCount > 0
       ? '<button class="shop-clear-checked-btn" id="clear-checked-shopping">購入済みを削除</button>'
       : '';
+    var clearAllBtn = total > 0
+      ? '<button class="shop-clear-btn" id="clear-shopping">全て削除</button>'
+      : '';
+    var shareRow = total > 0
+      ? '<div class="shop-share-row"><button type="button" class="share-btn" id="shop-share">📤 共有する</button></div>'
+      : '';
+    var addFormHtml = ''
+      + '<div class="shop-add-row">'
+        + '<span class="shop-name-wrap">'
+          + '<input type="text" id="shop-name" placeholder="食材名（例：鶏肉）" aria-label="食材名">'
+          + '<button type="button" class="voice-input-btn" data-voice-target="shop-name" aria-label="音声で食材名を入力">🎤</button>'
+        + '</span>'
+        + '<div class="shop-add-row-sub">'
+          + '<input type="text" id="shop-amount" placeholder="数量（例：200g）" aria-label="数量">'
+          + '<button type="button" id="shop-add">追加</button>'
+        + '</div>'
+      + '</div>';
+    var emptyHint = total === 0
+      ? '<div class="remix-hint" style="margin-top:8px;">買い物リストは空です。食材名を入力して追加できます。</div>'
+      : '';
     container.innerHTML = ''
       + '<div class="card shopping-section">'
         + '<div class="section-header">'
           + '<h3>🛒 買い物リスト（' + total + '品）</h3>'
           + '<div class="shop-actions">'
             + clearCheckedBtn
-            + '<button class="shop-clear-btn" id="clear-shopping">全て削除</button>'
+            + clearAllBtn
           + '</div>'
         + '</div>'
-        + '<div class="shop-share-row">'
-          + '<button type="button" class="share-btn" id="shop-share">📤 共有する</button>'
-        + '</div>'
+        + addFormHtml
+        + shareRow
         + groupsHtml
         + checkedHtml
+        + emptyHint
       + '</div>';
 
     function itemHtml(item) {
@@ -5877,6 +5942,61 @@ renderFridge();
     if (clearAll) clearAll.addEventListener('click', function () {
       if (confirm('買い物リストを全て削除しますか？')) clearShoppingList();
     });
+
+    // Manual add form handlers (shop-name + shop-amount + shop-add)
+    var shopNameEl = document.getElementById('shop-name');
+    var shopAmountEl = document.getElementById('shop-amount');
+    var shopAddBtn = document.getElementById('shop-add');
+    function submitShopAdd() {
+      if (!shopNameEl) return;
+      var name = (shopNameEl.value || '').trim();
+      var amount = (shopAmountEl && shopAmountEl.value || '').trim();
+      if (!name) {
+        shopNameEl.classList.add('invalid');
+        try { shopNameEl.focus(); } catch (_) {}
+        setTimeout(function () { shopNameEl.classList.remove('invalid'); }, 1500);
+        return;
+      }
+      var curList = loadShoppingList();
+      var existing = curList.find(function (i) { return (i.name || '').trim() === name; });
+      if (existing) {
+        // Merge amounts (simple concatenation with ' / ' separator when both present)
+        if (amount) {
+          existing.amount = existing.amount ? (existing.amount + ' / ' + amount) : amount;
+        }
+        existing.category = existing.category || categorize(name);
+        saveShoppingList(curList);
+        try { if (typeof window.showToast === 'function') window.showToast('🛒 「' + name + '」の数量を追記しました', { variant: 'success', duration: 2000 }); } catch (_) {}
+      } else {
+        curList.push({
+          id: 'shop_' + Date.now() + '_m',
+          name: name,
+          amount: amount,
+          recipeName: '',
+          checked: false,
+          addedAt: new Date().toISOString(),
+          category: categorize(name)
+        });
+        saveShoppingList(curList);
+        try { if (typeof window.showToast === 'function') window.showToast('🛒 「' + name + '」を追加しました', { variant: 'success', duration: 1800 }); } catch (_) {}
+      }
+      // Reset inputs and re-render; then refocus name input
+      try { shopNameEl.value = ''; } catch (_) {}
+      try { if (shopAmountEl) shopAmountEl.value = ''; } catch (_) {}
+      window.renderShoppingList();
+      try {
+        var next = document.getElementById('shop-name');
+        if (next) next.focus();
+      } catch (_) {}
+    }
+    if (shopAddBtn) shopAddBtn.addEventListener('click', submitShopAdd);
+    [shopNameEl, shopAmountEl].forEach(function (el) {
+      if (!el) return;
+      el.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter') { ev.preventDefault(); submitShopAdd(); }
+      });
+    });
+
     var clearChk = document.getElementById('clear-checked-shopping');
     if (clearChk) clearChk.addEventListener('click', function () { removeCheckedShoppingItems(); });
     container.querySelectorAll('.shop-item-check').forEach(function (cb) {
