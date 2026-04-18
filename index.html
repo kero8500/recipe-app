@@ -2687,8 +2687,8 @@
 <body>
 <div class="wrap">
   <header>
-    <h1>🍳 レシピ提案AI</h1>
-    <p>あなたにぴったりのレシピをAIが考えます</p>
+    <h1 id="app-title">🍳 レシピ提案AI</h1>
+    <p id="app-subtitle">あなたにぴったりのレシピをAIが考えます</p>
     <button type="button" id="open-settings" class="gear-btn" aria-label="設定">⚙</button>
   </header>
 
@@ -7040,6 +7040,25 @@ renderFridge();
 
     hideAll();
     showGroup(tabName);
+
+    // 画面ごとにヘッダーのタイトル・説明文を切替
+    try {
+      var HEADER_TEXTS = {
+        'home':       { title: '🍳 レシピ提案AI',  subtitle: 'あなたにぴったりのレシピをAIが考えます' },
+        'fridge':     { title: '冷蔵庫在庫登録',    subtitle: '冷蔵庫内外の在庫の登録ができます' },
+        'shopping':   { title: '買い物リスト',      subtitle: '買い物リスト一覧の参照、登録ができます' },
+        'favorites':  { title: 'お気に入りレシピ',  subtitle: 'お気に入りに登録したレシピ一覧を参照できます' },
+        'my-recipes': { title: 'レシピ登録',        subtitle: 'レシピの登録ができます' },
+        'history':    { title: 'レシピ履歴',        subtitle: 'レシピの閲覧履歴を参照できます' }
+      };
+      var __ht = HEADER_TEXTS[tabName];
+      if (__ht) {
+        var __t = document.getElementById('app-title');
+        var __s = document.getElementById('app-subtitle');
+        if (__t) __t.textContent = __ht.title;
+        if (__s) __s.textContent = __ht.subtitle;
+      }
+    } catch (_) {}
 
     tabbar.querySelectorAll('.tab').forEach(function (b) {
       var active = b.dataset.tab === tabName;
