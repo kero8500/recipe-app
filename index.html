@@ -971,7 +971,7 @@
   .shop-add-row .voice-input-btn {
     position: absolute; top: 50%; right: 4px; transform: translateY(-50%);
     width: 40px; height: 40px; min-width: 40px; min-height: 40px; font-size: 15px;
-    border-radius: 10px; border: 1.5px solid #ffd4b0; background: #fff; color: #e8590c; cursor: pointer;
+    border-radius: 50%; border: 1.5px solid #ffd4b0; background: #fff; color: #e8590c; cursor: pointer;
     display: inline-flex; align-items: center; justify-content: center;
   }
   .shop-add-row .voice-input-btn.recording { background: #ffe8d6; }
@@ -5924,8 +5924,22 @@ renderFridge();
       + '</div>';
 
     function itemHtml(item) {
+      var editingId = window._shopEditingId || null;
+      if (editingId && editingId === item.id && item.manual === true) {
+        return '<div class="fridge-edit-form shop-edit-form" data-id="' + htmlEscape(item.id) + '">'
+          + '<input type="text" class="shop-edit-name" value="' + htmlEscape(item.name || '') + '" placeholder="食材名" aria-label="食材名">'
+          + '<input type="text" class="shop-edit-amount" value="' + htmlEscape(item.amount || '') + '" placeholder="数量 (例: 200g)" aria-label="数量">'
+          + '<div class="fridge-edit-actions">'
+            + '<button type="button" class="fridge-edit-cancel shop-edit-cancel" data-id="' + htmlEscape(item.id) + '">キャンセル</button>'
+            + '<button type="button" class="fridge-edit-save shop-edit-save" data-id="' + htmlEscape(item.id) + '">保存</button>'
+          + '</div>'
+        + '</div>';
+      }
       var checkedClass = item.checked ? ' checked' : '';
       var checkedAttr = item.checked ? ' checked' : '';
+      var editBtn = (item.manual === true)
+        ? '<button class="fridge-edit-btn shop-edit-btn" data-id="' + htmlEscape(item.id) + '" aria-label="' + htmlEscape(item.name) + 'を編集" title="編集">✏</button>'
+        : '';
       return '<div class="shop-item' + checkedClass + '" data-id="' + htmlEscape(item.id) + '">'
         + '<input type="checkbox" class="shop-item-check" data-id="' + htmlEscape(item.id) + '"' + checkedAttr + ' aria-label="' + htmlEscape(item.name) + 'の購入チェック">'
         + '<div class="shop-item-info">'
@@ -5933,6 +5947,7 @@ renderFridge();
           + '<span class="shop-item-amount">' + htmlEscape(item.amount || '') + '</span>'
           + '<div class="shop-item-recipe">' + htmlEscape(item.recipeName || '') + '</div>'
         + '</div>'
+        + editBtn
         + '<button class="shop-delete-btn" data-id="' + htmlEscape(item.id) + '" aria-label="' + htmlEscape(item.name) + 'を削除">×</button>'
       + '</div>';
     }
@@ -5958,28 +5973,18 @@ renderFridge();
         return;
       }
       var curList = loadShoppingList();
-      var existing = curList.find(function (i) { return (i.name || '').trim() === name; });
-      if (existing) {
-        // Merge amounts (simple concatenation with ' / ' separator when both present)
-        if (amount) {
-          existing.amount = existing.amount ? (existing.amount + ' / ' + amount) : amount;
-        }
-        existing.category = existing.category || categorize(name);
-        saveShoppingList(curList);
-        try { if (typeof window.showToast === 'function') window.showToast('🛒 「' + name + '」の数量を追記しました', { variant: 'success', duration: 2000 }); } catch (_) {}
-      } else {
-        curList.push({
-          id: 'shop_' + Date.now() + '_m',
-          name: name,
-          amount: amount,
-          recipeName: '',
-          checked: false,
-          addedAt: new Date().toISOString(),
-          category: categorize(name)
-        });
-        saveShoppingList(curList);
-        try { if (typeof window.showToast === 'function') window.showToast('🛒 「' + name + '」を追加しました', { variant: 'success', duration: 1800 }); } catch (_) {}
-      }
+      curList.push({
+        id: 'shop_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7) + '_m',
+        name: name,
+        amount: amount,
+        recipeName: '',
+        checked: false,
+        addedAt: new Date().toISOString(),
+        category: categorize(name),
+        manual: true
+      });
+      saveShoppingList(curList);
+      try { if (typeof window.showToast === 'function') window.showToast('🛒 「' + name + '」を追加しました', { variant: 'success', duration: 1800 }); } catch (_) {}
       // Reset inputs and re-render; then refocus name input
       try { shopNameEl.value = ''; } catch (_) {}
       try { if (shopAmountEl) shopAmountEl.value = ''; } catch (_) {}
@@ -6016,6 +6021,44 @@ renderFridge();
         } else {
           removeShoppingItem(id);
         }
+      });
+    });
+
+    // Edit button handlers (manual items only)
+    container.querySelectorAll('.shop-edit-btn').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        window._shopEditingId = btn.dataset.id;
+        window.renderShoppingList();
+      });
+    });
+    container.querySelectorAll('.shop-edit-cancel').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        window._shopEditingId = null;
+        window.renderShoppingList();
+      });
+    });
+    container.querySelectorAll('.shop-edit-save').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var id = btn.dataset.id;
+        var form = btn.closest('.shop-edit-form');
+        if (!form) return;
+        var newName = (form.querySelector('.shop-edit-name').value || '').trim();
+        var newAmount = (form.querySelector('.shop-edit-amount').value || '').trim();
+        if (!newName) { alert('食材名を入力してください。'); return; }
+        var l = loadShoppingList();
+        var idx = -1;
+        for (var i = 0; i < l.length; i++) { if (l[i].id === id) { idx = i; break; } }
+        if (idx < 0) { window._shopEditingId = null; window.renderShoppingList(); return; }
+        l[idx].name = newName;
+        l[idx].amount = newAmount;
+        l[idx].category = categorize(newName);
+        saveShoppingList(l);
+        window._shopEditingId = null;
+        window.renderShoppingList();
+        try { if (typeof window.showToast === 'function') window.showToast('「' + newName + '」を更新しました', { variant: 'success', duration: 1800 }); } catch (_) {}
       });
     });
 
