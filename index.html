@@ -238,6 +238,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 8px;
     margin-bottom: 10px;
   }
   .history-section .section-header h3 {
@@ -323,6 +324,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 8px;
     margin-bottom: 10px;
   }
   .favorites-section .section-header h3 {
@@ -2084,7 +2086,7 @@
   .history-item .history-date { font-size: var(--fs-meta); color: var(--color-muted); }
   .history-section .section-header h3,
   .favorites-section .section-header h3,
-  .shopping-section .section-header h3 { font-size: 17px; color: var(--color-muted-strong); }
+  .shopping-section .section-header h3 { font-size: 17px; font-weight: 700; color: var(--color-muted-strong); margin: 0; }
   .tip { font-size: var(--fs-meta); color: #4a2f15; }
   .remix-hint { font-size: var(--fs-meta); color: var(--color-muted-strong); }
   .apikey-note { font-size: var(--fs-meta); color: var(--color-muted-strong); }
@@ -2093,7 +2095,6 @@
   header p { font-size: var(--fs-meta); color: var(--color-muted-strong); }
 
   /* A-1: タップ領域 48px 統一（小さい補助ボタンを底上げ） */
-  .history-clear-btn,
   .shop-clear-btn,
   .shop-clear-checked-btn,
   .fridge-delete-btn,
@@ -2105,9 +2106,10 @@
     align-items: center;
     justify-content: center;
   }
-  /* お気に入りヘッダーのボタンはコンパクトピル型 */
+  /* お気に入り・履歴ヘッダーのボタンはコンパクトピル型（デザイン統一） */
   .fav-clear-btn,
-  .fav-history-btn {
+  .fav-history-btn,
+  .history-clear-btn {
     min-height: 36px;
     padding: 6px 12px;
     font-size: 12px;
@@ -2124,10 +2126,10 @@
     height: 32px;
     min-width: 32px;
     border-radius: 50%;
-    background: transparent;
+    background: rgba(255,255,255,0.9);
     border: 1px solid #ffd4b0;
-    color: #c0392b;
-    font-size: 16px;
+    color: #c33;
+    font-size: 14px;
     line-height: 1;
     cursor: pointer;
     padding: 0;
