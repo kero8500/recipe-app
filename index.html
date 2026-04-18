@@ -538,21 +538,26 @@
     margin-top: 1px;
   }
   .shop-delete-btn {
-    padding: 2px 8px;
-    font-size: 14px;
-    font-weight: 600;
+    flex: 0 0 auto;
+    margin-left: 8px;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    border-radius: 50%;
+    background: #fff;
+    border: 1px solid #ffd4b0;
     color: #c33;
-    background: #ffe0e0;
-    border: 1px solid #ffc0c0;
-    border-radius: 6px;
-    cursor: pointer;
-    width: auto;
-    box-shadow: none;
-    flex-shrink: 0;
+    font-size: 14px;
     line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: none;
   }
   .shop-delete-btn:active {
-    background: #ffd0d0;
+    background: #ffe8d6;
   }
 
   /* Meal (1食分献立) styles */
@@ -1790,17 +1795,18 @@
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: rgba(255,255,255,0.9);
+    background: #fff;
     border: 1px solid #ffd4b0;
     color: #c33;
     font-size: 14px;
     cursor: pointer;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    box-shadow: none;
     padding: 0;
     display: flex;
     align-items: center;
     justify-content: center;
   }
+  .fav-card .fav-del:active { background: #ffe8d6; }
   .fav-card .fav-tag-btn {
     position: absolute;
     top: 6px;
@@ -2094,9 +2100,7 @@
   .nutri .val { font-size: var(--fs-label); }
   header p { font-size: var(--fs-meta); color: var(--color-muted-strong); }
 
-  /* A-1: タップ領域 48px 統一（小さい補助ボタンを底上げ） */
-  .shop-clear-btn,
-  .shop-clear-checked-btn,
+  /* A-1: タップ領域統一（小さい補助ボタンを底上げ） */
   .fridge-delete-btn,
   .retry-btn {
     min-height: var(--tap-min);
@@ -2106,13 +2110,16 @@
     align-items: center;
     justify-content: center;
   }
-  /* お気に入り・履歴ヘッダーのボタンはコンパクトピル型（デザイン統一） */
+  /* 3画面（お気に入り・履歴・買い物リスト）ヘッダーのボタンはコンパクトピル型で統一 */
   .fav-clear-btn,
   .fav-history-btn,
-  .history-clear-btn {
+  .history-clear-btn,
+  .shop-clear-btn,
+  .shop-clear-checked-btn {
     min-height: 36px;
     padding: 6px 12px;
     font-size: 12px;
+    border-radius: 8px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -2126,7 +2133,7 @@
     height: 32px;
     min-width: 32px;
     border-radius: 50%;
-    background: rgba(255,255,255,0.9);
+    background: #fff;
     border: 1px solid #ffd4b0;
     color: #c33;
     font-size: 14px;
@@ -5560,14 +5567,14 @@ renderFridge();
         var id = btn.dataset.id;
         var l = loadShoppingList();
         var entry = l.find(function (i) { return i.id === id; });
-        removeShoppingItem(id);
-        if (entry && window.showSnackbar) {
-          window.showSnackbar('「' + entry.name + '」を削除しました', {
-            onAction: function () {
-              var l2 = loadShoppingList(); l2.push(entry); saveShoppingList(l2);
-              if (typeof window.renderShoppingList === 'function') window.renderShoppingList();
-            }
+        if (!entry) return;
+        var name = entry.name || '';
+        if (typeof window.showDeleteConfirm === 'function') {
+          window.showDeleteConfirm(name, function () {
+            removeShoppingItem(id);
           });
+        } else {
+          removeShoppingItem(id);
         }
       });
     });
@@ -5593,17 +5600,20 @@ renderFridge();
         window.attachSwipe(item, {
           leftHint: '🗑 削除',
           rightHint: '✓ 完了',
-          onLeft: function () {
+          onLeft: function (el) {
             var l = loadShoppingList();
             var entry = l.find(function (i) { return i.id === id; });
-            if (!entry) return;
-            removeShoppingItem(id);
-            window.showSnackbar('「' + entry.name + '」を削除しました', {
-              onAction: function () {
-                var l2 = loadShoppingList(); l2.push(entry); saveShoppingList(l2);
-                window.renderShoppingList();
-              }
-            });
+            if (!entry) { if (typeof window.resetSwipeState === 'function') window.resetSwipeState(el); return; }
+            var name = entry.name || '';
+            if (typeof window.showDeleteConfirm === 'function') {
+              window.showDeleteConfirm(name, function () {
+                removeShoppingItem(id);
+              }, function () {
+                if (typeof window.resetSwipeState === 'function') window.resetSwipeState(el);
+              });
+            } else {
+              removeShoppingItem(id);
+            }
           },
           onRight: function () { toggleShoppingItemCheck(id); },
           rightOutAnim: false
