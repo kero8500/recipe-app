@@ -882,6 +882,18 @@
     cursor: pointer;
   }
   .fridge-edit-save { background: #e8590c; color: #fff; }
+  /* 登録済レシピの編集フォーム（冷蔵庫 fridge-edit-actions と揃える） */
+  .my-recipe-form-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .my-recipe-form-actions button {
+    flex: 1 1 0;
+    min-height: 40px;
+    font-size: 14px;
+    font-weight: 700;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    padding: 0 12px;
+  }
   /* ===== My Recipes (レシピ登録) ===== */
   .my-recipe-media-row { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
   .my-recipe-file-btn {
@@ -904,8 +916,7 @@
   .my-recipe-item-name { flex:1; font-weight:600; color:#6b4423; cursor:pointer; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .my-recipe-item-actions { display:flex; gap:0; flex-shrink:0; align-items:center; }
   .my-recipe-item-actions .fridge-edit-btn + .fridge-delete-btn { margin-left: -4px; }
-  .my-recipe-item-actions button { padding:6px 10px; border-radius:8px; border:1px solid #ffd4b0; background:#fff; cursor:pointer; font-size:14px; }
-  .my-recipe-item-actions button:hover { background:#fff3e6; }
+  /* 冷蔵庫画面と揃える: .fridge-edit-btn / .fridge-delete-btn の既定スタイルを維持 */
   .my-recipe-empty { padding:14px; text-align:center; color:#6b4423; font-size:13px; }
   .my-recipes-header { display:flex; justify-content:flex-end; margin:4px 0 10px; }
   .my-recipes-header .fav-history-btn { font-size:13px; padding:6px 12px; }
@@ -1560,13 +1571,7 @@
   /* Panels */
   .panel { display: none; }
   .panel.active { display: block; }
-  #panel-my-recipes.active {
-    display: block;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    height: auto;
-    touch-action: pan-y;
-  }
+  /* #panel-my-recipes は他パネル同様 body スクロールに任せる (iOS で親スクロールを奪う問題回避) */
 
   /* === Phase 1: Mobile UX (Sticky CTA / Swipe / Snackbar / Voice) === */
   /* Sticky CTA bar */
@@ -1926,6 +1931,18 @@
     cursor: pointer;
     padding: 0;
   }
+  .history-modal-close.my-recipes-modal-close-text {
+    width: auto;
+    height: auto;
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    background: #fff3e6;
+    color: #8b4513;
+    border: 1.5px solid #ffd4b0;
+  }
+  .history-modal-close.my-recipes-modal-close-text:active { background: #ffe8d6; }
   .history-modal-body {
     overflow-y: auto;
     padding: 8px 10px 12px;
@@ -2821,9 +2838,9 @@
         </div>
         <div id="my-recipe-image-preview" class="my-recipe-preview-img"></div>
         <div id="my-recipe-video-preview" class="my-recipe-preview-video"></div>
-        <div style="display:flex;gap:8px;margin-top:10px;">
-          <button type="button" id="my-recipe-save" class="fridge-use-btn" style="flex:1;">💾 保存する</button>
-          <button type="button" id="my-recipe-cancel" class="btn-cancel" style="display:none;">キャンセル</button>
+        <div class="my-recipe-form-actions">
+          <button type="button" id="my-recipe-cancel" class="fridge-edit-cancel" style="display:none;">キャンセル</button>
+          <button type="button" id="my-recipe-save" class="fridge-edit-save">保存</button>
         </div>
       </div>
     </div>
@@ -2848,7 +2865,7 @@
     <div class="history-modal">
       <div class="history-modal-head">
         <h3 id="my-recipes-modal-title">📋 登録済レシピ</h3>
-        <button type="button" class="history-modal-close" id="my-recipes-modal-close" aria-label="閉じる">×</button>
+        <button type="button" class="history-modal-close my-recipes-modal-close-text" id="my-recipes-modal-close" aria-label="閉じる">閉じる</button>
       </div>
       <div class="history-modal-body" id="my-recipes-modal-body"></div>
     </div>
@@ -7043,6 +7060,7 @@ renderFridge();
     if (tabName === 'history') {
       // Render history directly in #history-container (as a tab, not modal)
       try { if (typeof renderHistory === 'function') renderHistory(); } catch (_) {}
+      try { if (typeof window.attachHistoryTabSwipe === 'function') window.attachHistoryTabSwipe(); } catch (_) {}
     }
     if (tabName === 'my-recipes' && typeof window.renderMyRecipes === 'function') {
       try { window.renderMyRecipes(); } catch (_) {}
@@ -7391,6 +7409,45 @@ document.addEventListener('DOMContentLoaded', function () {
         +   '<button type="button" class="shop-delete-btn fridge-delete-btn" data-action="delete" aria-label="' + esc(r.name || 'レシピ') + 'を削除">×</button>'
         + '</div></div>';
     }).join('');
+    if (typeof window.attachSwipe === 'function') {
+      body.querySelectorAll('.my-recipe-item').forEach(function (item) {
+        if (item._swipeBound) return;
+        var id = item.getAttribute('data-id');
+        window.attachSwipe(item, {
+          leftHint: '🗑 削除',
+          onLeft: function (el) {
+            var current = load();
+            var entry = current.find(function (x) { return x.id === id; });
+            if (!entry) { if (typeof window.resetSwipeState === 'function') window.resetSwipeState(el); return; }
+            var doDel = function () {
+              var next = load().filter(function (x) { return x.id !== id; });
+              try { save(next); } catch (_) {}
+              if (editingId === id) resetForm();
+              renderList();
+              if (typeof window.showSnackbar === 'function') {
+                window.showSnackbar('「' + (entry.name || 'レシピ') + '」を削除しました', {
+                  onAction: function () {
+                    var l2 = load();
+                    l2.unshift(entry);
+                    try { save(l2); } catch (_) {}
+                    renderList();
+                  }
+                });
+              } else if (typeof window.showToast === 'function') {
+                window.showToast('削除しました');
+              }
+            };
+            if (typeof window.showDeleteConfirm === 'function') {
+              window.showDeleteConfirm(entry.name || 'レシピ', doDel, function () {
+                if (typeof window.resetSwipeState === 'function') window.resetSwipeState(el);
+              }, 'レシピ');
+            } else {
+              doDel();
+            }
+          }
+        });
+      });
+    }
   }
   function openMyRecipesModal() {
     var modal = document.getElementById('my-recipes-modal');
@@ -7598,6 +7655,72 @@ document.addEventListener('DOMContentLoaded', function () {
   } else {
     initPanelHandlers();
     try { renderList(); } catch (_) {}
+  }
+})();
+</script>
+<script>
+// 履歴タブ(#history-container)の明細に左スワイプ削除（undo付き）を適用
+(function () {
+  function attach() {
+    var cont = document.getElementById('history-container');
+    if (!cont) return;
+    if (typeof window.attachSwipe !== 'function') return;
+    cont.querySelectorAll('.history-item').forEach(function (item) {
+      if (item._swipeBound) return;
+      window.attachSwipe(item, {
+        leftHint: '🗑 削除',
+        onLeft: function (el) {
+          var idx = parseInt(item.dataset.idx, 10);
+          var list = (typeof loadHistory === 'function') ? loadHistory() : [];
+          var entry = list[idx];
+          if (!entry) { if (typeof window.resetSwipeState === 'function') window.resetSwipeState(el); return; }
+          var doDel = function () {
+            var fresh = loadHistory();
+            var targetIdx = -1;
+            for (var i = 0; i < fresh.length; i++) {
+              if (fresh[i].name === entry.name && fresh[i].date === entry.date) { targetIdx = i; break; }
+            }
+            if (targetIdx === -1) return;
+            fresh.splice(targetIdx, 1);
+            saveHistory(fresh);
+            if (typeof window.renderHistory === 'function') window.renderHistory();
+            setTimeout(attach, 0);
+            if (typeof window.showSnackbar === 'function') {
+              window.showSnackbar('「' + (entry.name || 'レシピ') + '」を削除しました', {
+                onAction: function () {
+                  var l2 = loadHistory();
+                  l2.unshift(entry);
+                  try { saveHistory(l2); } catch (_) {}
+                  if (typeof window.renderHistory === 'function') window.renderHistory();
+                  setTimeout(attach, 0);
+                }
+              });
+            }
+          };
+          if (typeof window.showDeleteConfirm === 'function') {
+            window.showDeleteConfirm(entry.name || 'レシピ', doDel, function () {
+              if (typeof window.resetSwipeState === 'function') window.resetSwipeState(el);
+            });
+          } else {
+            doDel();
+          }
+        }
+      });
+    });
+  }
+  window.attachHistoryTabSwipe = attach;
+  var orig = window.renderHistory;
+  if (typeof orig === 'function') {
+    window.renderHistory = function () {
+      var r = orig.apply(this, arguments);
+      try { attach(); } catch (_) {}
+      return r;
+    };
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () { try { attach(); } catch (_) {} });
+  } else {
+    try { attach(); } catch (_) {}
   }
 })();
 </script>
