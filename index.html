@@ -774,7 +774,7 @@
   /* Fridge (inventory) */
   .fridge-item {
     display: grid;
-    grid-template-columns: 1.5fr 1fr 1fr auto;
+    grid-template-columns: auto 1.5fr 1fr 1fr auto;
     gap: 6px;
     padding: 8px 4px;
     border-bottom: 1px dashed #ffd4b0;
@@ -818,6 +818,13 @@
   .fridge-use-btn {
     margin-top: 10px;
   }
+  .fridge-expiry-wrap { position: relative; display: inline-flex; align-items: center; gap: 4px; }
+  .fridge-expiry-input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+  .fridge-expiry-btn { width: 36px; height: 36px; min-width: 36px; border-radius: 8px; background: #fff; border: 1.5px solid #ffd4b0; color: #e8590c; font-size: 16px; cursor: pointer; padding: 0; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+  .fridge-expiry-btn:active { background: #ffe8d6; }
+  .fridge-expiry-btn.has-value { background: #fff3e6; border-color: #e8590c; }
+  .fridge-expiry-display { font-size: 11px; color: #8b4513; white-space: nowrap; }
+  .fridge-item-check { width: 18px; height: 18px; cursor: pointer; accent-color: #e8590c; margin-right: 2px; }
   /* Cooking mode (fullscreen) */
   .cooking-overlay {
     position: fixed;
@@ -2521,7 +2528,11 @@
       <div class="fridge-add-row">
         <input type="text" id="fridge-name" placeholder="食材名（例：鶏肉）" aria-label="食材名">
         <input type="text" id="fridge-amount" placeholder="数量（例：300g）" aria-label="数量">
-        <input type="date" id="fridge-expiry" aria-label="賞味期限">
+        <div class="fridge-expiry-wrap">
+          <button type="button" id="fridge-expiry-btn" class="fridge-expiry-btn" aria-label="賞味期限を選択" title="賞味期限を選択">📅</button>
+          <span id="fridge-expiry-display" class="fridge-expiry-display" aria-live="polite"></span>
+          <input type="date" id="fridge-expiry" aria-label="賞味期限" class="fridge-expiry-input">
+        </div>
         <button id="fridge-add" style="width:auto; padding:8px 14px; font-size:13px; white-space:nowrap;">追加</button>
       </div>
       <div id="fridge-list"></div>
@@ -4504,23 +4515,77 @@ function renderFridge() {
         badge = '<span class="fridge-badge ok">あと' + days + '日</span>';
       }
     }
-    return '<div class="' + cls + '">' +
+    var checked = (window._fridgeSelected && window._fridgeSelected[item.id]) ? ' checked' : '';
+    return '<div class="' + cls + '" data-id="' + escapeHtml(item.id) + '">' +
+      '<input type="checkbox" class="fridge-item-check" data-id="' + escapeHtml(item.id) + '"' + checked + ' aria-label="' + escapeHtml(item.name) + 'を選択">' +
       '<div>' + escapeHtml(item.name) + badge + '</div>' +
       '<div style="font-size:12px; color:#8b4513;">' + escapeHtml(item.amount || '-') + '</div>' +
       '<div style="font-size:11px; color:#8b4513;">' + escapeHtml(item.expiry || '期限なし') + '</div>' +
-      '<button class="fridge-delete-btn" data-id="' + escapeHtml(item.id) + '">削除</button>' +
+      '<button class="shop-delete-btn fridge-delete-btn" data-id="' + escapeHtml(item.id) + '" aria-label="' + escapeHtml(item.name) + 'を削除">×</button>' +
       '</div>';
   }).join('');
   container.querySelectorAll('.fridge-delete-btn').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      removeFridgeItem(btn.dataset.id);
-      renderFridge();
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var id = btn.dataset.id;
+      var entry = loadFridge().find(function (x) { return x.id === id; });
+      var name = entry ? entry.name : '食材';
+      var doDelete = function () {
+        removeFridgeItem(id);
+        if (window._fridgeSelected) delete window._fridgeSelected[id];
+        renderFridge();
+      };
+      if (typeof window.showDeleteConfirm === 'function') {
+        window.showDeleteConfirm(name, doDelete, null, '食材');
+      } else {
+        doDelete();
+      }
     });
   });
+  window._fridgeSelected = window._fridgeSelected || {};
+  container.querySelectorAll('.fridge-item-check').forEach(function (cb) {
+    cb.addEventListener('change', function (e) {
+      e.stopPropagation();
+      var id = cb.dataset.id;
+      if (cb.checked) window._fridgeSelected[id] = true;
+      else delete window._fridgeSelected[id];
+      updateFridgeUseLabel();
+    });
+  });
+  updateFridgeUseLabel();
+}
+function updateFridgeUseLabel() {
+  var btn = document.getElementById('fridge-use');
+  if (!btn) return;
+  var sel = window._fridgeSelected || {};
+  var ids = loadFridge().map(function (x) { return x.id; });
+  var count = 0;
+  ids.forEach(function (id) { if (sel[id]) count++; });
+  btn.textContent = count > 0 ? ('🍳 選択した食材でレシピ提案 (' + count + ')') : '🍳 在庫から献立を提案';
 }
 (function () {
   var addBtn = document.getElementById('fridge-add');
   if (!addBtn) return;
+  var expBtn = document.getElementById('fridge-expiry-btn');
+  var expInput = document.getElementById('fridge-expiry');
+  var expDisplay = document.getElementById('fridge-expiry-display');
+  function updateExpiryDisplay() {
+    if (!expInput || !expDisplay) return;
+    var v = expInput.value;
+    expDisplay.textContent = v || '';
+    if (expBtn) {
+      expBtn.classList.toggle('has-value', !!v);
+      expBtn.title = v ? ('賞味期限: ' + v) : '賞味期限を選択';
+    }
+  }
+  if (expBtn && expInput) {
+    expBtn.addEventListener('click', function () {
+      try { if (typeof expInput.showPicker === 'function') { expInput.showPicker(); return; } } catch (_) {}
+      expInput.focus();
+      expInput.click();
+    });
+    expInput.addEventListener('change', updateExpiryDisplay);
+  }
   addBtn.addEventListener('click', function () {
     var name = document.getElementById('fridge-name').value.trim();
     var amount = document.getElementById('fridge-amount').value.trim();
@@ -4530,30 +4595,36 @@ function renderFridge() {
       document.getElementById('fridge-name').value = '';
       document.getElementById('fridge-amount').value = '';
       document.getElementById('fridge-expiry').value = '';
+      updateExpiryDisplay();
       renderFridge();
     }
   });
   var useBtn = document.getElementById('fridge-use');
   if (useBtn) {
     useBtn.addEventListener('click', function () {
-      var list = loadFridge();
-      if (list.length === 0) {
+      var fullList = loadFridge();
+      if (fullList.length === 0) {
         alert('冷蔵庫が空です。先に食材を追加してください。');
         return;
       }
-      // Prioritize items expiring soon (<=3 days) or expired
+      var sel = window._fridgeSelected || {};
+      var selectedList = fullList.filter(function (x) { return sel[x.id]; });
+      var useSelected = selectedList.length > 0;
+      var list = useSelected ? selectedList : fullList;
       var prio = list.filter(function (x) {
         var d = fridgeDaysLeft(x.expiry);
         return d !== null && d <= 3;
       });
       var allNames = list.map(function (x) { return x.name + (x.amount ? '(' + x.amount + ')' : ''); }).join('、');
       var prioNames = prio.map(function (x) { return x.name; }).join('、');
-      // Fill into main ingredients field + craving, then switch to recipe panel and trigger generateRecipe
       var ingEl = document.getElementById('ingredients');
       var cravingEl = document.getElementById('craving');
       ingEl.value = allNames;
-      if (prioNames) cravingEl.value = '期限間近の「' + prioNames + '」を優先的に使って';
-      // Switch panel
+      if (useSelected) {
+        cravingEl.value = '選択した「' + list.map(function (x) { return x.name; }).join('、') + '」を使って';
+      } else if (prioNames) {
+        cravingEl.value = '期限間近の「' + prioNames + '」を優先的に使って';
+      }
       document.querySelector('.top-menu button[data-panel="panel-recipe"]').click();
       setTimeout(function () { generateRecipe(); }, 100);
     });
@@ -5411,20 +5482,35 @@ renderFridge();
         window.attachSwipe(item, {
           leftHint: '🗑 削除',
           rightHint: '🍳 これでレシピ',
-          onLeft: function () {
+          onLeft: function (el) {
             var list = loadFridge();
             var entry = list.find(function (x) { return x.id === id; });
-            if (!entry) return;
-            removeFridgeItem(id);
-            window.renderFridge();
-            window.showSnackbar('「' + entry.name + '」を削除しました', {
-              onAction: function () {
-                var l2 = loadFridge();
-                l2.push(entry);
-                saveFridge(l2);
+            if (!entry) {
+              if (typeof window.resetSwipeState === 'function') window.resetSwipeState(el);
+              return;
+            }
+            if (typeof window.showDeleteConfirm === 'function') {
+              window.showDeleteConfirm(entry.name, function () {
+                removeFridgeItem(id);
+                if (window._fridgeSelected) delete window._fridgeSelected[id];
                 window.renderFridge();
-              }
-            });
+                if (typeof window.showSnackbar === 'function') {
+                  window.showSnackbar('「' + entry.name + '」を削除しました', {
+                    onAction: function () {
+                      var l2 = loadFridge();
+                      l2.push(entry);
+                      saveFridge(l2);
+                      window.renderFridge();
+                    }
+                  });
+                }
+              }, function () {
+                if (typeof window.resetSwipeState === 'function') window.resetSwipeState(el);
+              }, '食材');
+            } else {
+              removeFridgeItem(id);
+              window.renderFridge();
+            }
           },
           onRight: function () {
             var list = loadFridge();
