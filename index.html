@@ -882,6 +882,46 @@
     cursor: pointer;
   }
   .fridge-edit-save { background: #e8590c; color: #fff; }
+  /* ===== My Recipes (レシピ登録) ===== */
+  .my-recipe-media-row { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
+  .my-recipe-file-btn {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:8px 14px; border-radius:10px; background:#fff3e6; color:#6b4423;
+    border:1px solid #ffd4b0; cursor:pointer; font-size:14px; font-weight:600;
+  }
+  .my-recipe-file-btn:hover { background:#ffe8d6; }
+  .my-recipe-preview-img img { max-width:100px; max-height:100px; border-radius:8px; margin-top:8px; object-fit:cover; display:block; }
+  .my-recipe-preview-video video { width:100%; max-height:240px; border-radius:8px; margin-top:8px; background:#000; display:block; }
+  .my-recipe-item {
+    display:flex; align-items:center; gap:10px;
+    padding:10px; background:#fff; border:1px solid #ffd4b0; border-radius:12px; margin-bottom:8px;
+  }
+  .my-recipe-item-thumb {
+    width:48px; height:48px; border-radius:8px; background:#fff3e6;
+    display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; overflow:hidden;
+  }
+  .my-recipe-item-thumb img { width:100%; height:100%; object-fit:cover; }
+  .my-recipe-item-name { flex:1; font-weight:600; color:#6b4423; cursor:pointer; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .my-recipe-item-actions { display:flex; gap:4px; flex-shrink:0; }
+  .my-recipe-item-actions button { padding:6px 10px; border-radius:8px; border:1px solid #ffd4b0; background:#fff; cursor:pointer; font-size:14px; }
+  .my-recipe-item-actions button:hover { background:#fff3e6; }
+  .my-recipe-empty { padding:14px; text-align:center; color:#6b4423; font-size:13px; }
+  .my-recipe-detail-overlay {
+    position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1100;
+    display:none; align-items:center; justify-content:center; padding:16px;
+  }
+  .my-recipe-detail-overlay.active { display:flex; }
+  .my-recipe-detail-modal {
+    background:#fff; border-radius:16px; max-width:500px; width:100%;
+    max-height:85vh; overflow-y:auto; padding:20px;
+    position:relative;
+  }
+  .my-recipe-detail-modal h3 { margin:0 0 12px; color:#e8590c; }
+  .my-recipe-detail-modal .detail-section { margin:12px 0; }
+  .my-recipe-detail-modal .detail-section strong { display:block; color:#6b4423; font-size:13px; margin-bottom:4px; }
+  .my-recipe-detail-modal .detail-section pre { white-space:pre-wrap; font-family:inherit; margin:0; color:#333; font-size:14px; }
+  .my-recipe-detail-modal .detail-close { position:absolute; top:10px; right:14px; background:none; border:none; font-size:22px; cursor:pointer; color:#6b4423; }
+
   .fridge-edit-cancel { background: #fff; color: #8b4513; border: 1.5px solid #ffd4b0 !important; }
   .fridge-add-row {
     display: flex;
@@ -2471,12 +2511,12 @@
     align-items: center;
     justify-content: center;
     gap: 2px;
-    padding: 6px 2px;
+    padding: 6px 1px;
     background: transparent;
     border: none;
     border-radius: 0;
     color: var(--color-muted-strong);
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 600;
     cursor: pointer;
     box-shadow: none;
@@ -2484,14 +2524,18 @@
     line-height: 1.15;
   }
   .bottom-tabbar .tab .tab-icon {
-    font-size: 20px;
+    font-size: 18px;
     line-height: 1;
     filter: grayscale(0.15);
     opacity: 0.75;
   }
   .bottom-tabbar .tab .tab-label {
-    font-size: 10px;
-    letter-spacing: 0.02em;
+    font-size: 9.5px;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
   }
   .bottom-tabbar .tab.active {
     color: var(--color-brand);
@@ -2731,6 +2775,44 @@
   <div id="favorites-container"></div>
   <div id="shopping-container"></div>
   <div id="history-container"></div>
+  <div id="panel-my-recipes" class="panel" style="display:none;">
+    <div class="card">
+      <h3 style="margin:0 0 10px;color:#e8590c;font-size:18px;">📝 レシピ登録</h3>
+      <div class="remix-hint">自分だけのオリジナルレシピを登録できます。画像・動画も添付可能（各10MBまで）。</div>
+      <div id="my-recipes-list"></div>
+      <h4 style="margin:18px 0 8px;color:#6b4423;font-size:15px;" id="my-recipe-form-title">新規登録</h4>
+      <div class="fridge-add-row">
+        <div class="voice-wrap-inline">
+          <input type="text" id="my-recipe-name" placeholder="レシピ名（例：鶏の照り焼き）" aria-label="レシピ名">
+          <button type="button" class="voice-input-btn" data-voice-target="my-recipe-name" aria-label="音声でレシピ名を入力">🎤</button>
+        </div>
+        <div class="voice-wrap-textarea">
+          <textarea id="my-recipe-ingredients" placeholder="材料（1行1品、例：&#10;鶏もも肉 300g&#10;醤油 大さじ2）" rows="4" aria-label="材料"></textarea>
+          <button type="button" class="voice-input-btn" data-voice-target="my-recipe-ingredients" aria-label="音声で材料を入力">🎤</button>
+        </div>
+        <textarea id="my-recipe-steps" placeholder="作り方（手順ごとに改行）" rows="5" aria-label="作り方" style="width:100%;box-sizing:border-box;padding:10px 12px;font-size:15px;border-radius:10px;border:1.5px solid #ffd4b0;background:#fff;"></textarea>
+        <textarea id="my-recipe-notes" placeholder="メモ（任意）" rows="2" aria-label="メモ" style="width:100%;box-sizing:border-box;padding:10px 12px;font-size:15px;border-radius:10px;border:1.5px solid #ffd4b0;background:#fff;"></textarea>
+        <div class="my-recipe-media-row">
+          <label class="my-recipe-file-btn">📷 画像を添付
+            <input type="file" id="my-recipe-image" accept="image/*" hidden>
+          </label>
+          <label class="my-recipe-file-btn">🎬 動画を添付
+            <input type="file" id="my-recipe-video" accept="video/*" hidden>
+          </label>
+        </div>
+        <div id="my-recipe-image-preview" class="my-recipe-preview-img"></div>
+        <div id="my-recipe-video-preview" class="my-recipe-preview-video"></div>
+        <div style="display:flex;gap:8px;margin-top:10px;">
+          <button type="button" id="my-recipe-save" class="fridge-use-btn" style="flex:1;">💾 保存する</button>
+          <button type="button" id="my-recipe-cancel" class="btn-cancel" style="display:none;">キャンセル</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="my-recipe-detail" class="my-recipe-detail-overlay" role="dialog" aria-modal="true">
+    <div class="my-recipe-detail-modal" id="my-recipe-detail-body"></div>
+  </div>
+
   <!-- 履歴モーダル: お気に入り画面から「📋 履歴を見る」で表示 -->
   <div id="history-modal" class="history-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="history-modal-title">
     <div class="history-modal">
@@ -2784,6 +2866,9 @@
   </button>
   <button type="button" class="tab" data-tab="favorites" role="tab" aria-selected="false">
     <span class="tab-icon" aria-hidden="true">⭐</span><span class="tab-label">お気に入り</span>
+  </button>
+  <button type="button" class="tab" data-tab="my-recipes" role="tab" aria-selected="false">
+    <span class="tab-icon" aria-hidden="true">📝</span><span class="tab-label">レシピ登録</span>
   </button>
   <button type="button" class="tab" data-tab="history" role="tab" aria-selected="false">
     <span class="tab-icon" aria-hidden="true">📋</span><span class="tab-label">履歴</span>
@@ -6843,6 +6928,7 @@ renderFridge();
     fridge: ['#panel-fridge'],
     shopping: ['#shopping-container'],
     favorites: ['#favorites-container'],
+    'my-recipes': ['#panel-my-recipes'],
     history: ['#history-container'],
   };
 
@@ -6879,9 +6965,18 @@ renderFridge();
     if (key === 'fridge') {
       var fr = document.getElementById('panel-fridge');
       if (fr) fr.classList.add('active');
+      var mrX = document.getElementById('panel-my-recipes');
+      if (mrX) mrX.classList.remove('active');
+    } else if (key === 'my-recipes') {
+      var mr = document.getElementById('panel-my-recipes');
+      if (mr) mr.classList.add('active');
+      var frX = document.getElementById('panel-fridge');
+      if (frX) frX.classList.remove('active');
     } else {
       var fr2 = document.getElementById('panel-fridge');
       if (fr2) fr2.classList.remove('active');
+      var mr2 = document.getElementById('panel-my-recipes');
+      if (mr2) mr2.classList.remove('active');
     }
   }
 
@@ -6919,6 +7014,9 @@ renderFridge();
       // Render history directly in #history-container (as a tab, not modal)
       try { if (typeof renderHistory === 'function') renderHistory(); } catch (_) {}
     }
+    if (tabName === 'my-recipes' && typeof window.renderMyRecipes === 'function') {
+      try { window.renderMyRecipes(); } catch (_) {}
+    }
 
     // 空時のヒント表示（お気に入りコンテナが空のとき）
     if (tabName === 'favorites') {
@@ -6953,7 +7051,7 @@ renderFridge();
 
   // 初期: ホームタブを有効化（冷蔵庫・買い物・お気に入り・履歴を非表示）
   // ただし最初は panel-fridge などが既に DOM にあるので隠す
-  ['#panel-fridge', '#favorites-container', '#shopping-container', '#history-container']
+  ['#panel-fridge', '#favorites-container', '#shopping-container', '#history-container', '#panel-my-recipes']
     .forEach(function (sel) {
       document.querySelectorAll(sel).forEach(function (el) { el.style.display = 'none'; });
     });
@@ -6978,6 +7076,10 @@ renderFridge();
     if (tabName !== 'fridge') {
       var fr = document.getElementById('panel-fridge');
       if (fr) fr.style.display = 'none';
+    }
+    if (tabName !== 'my-recipes') {
+      var mr = document.getElementById('panel-my-recipes');
+      if (mr) mr.style.display = 'none';
     }
   }
 
@@ -7202,5 +7304,233 @@ document.addEventListener('DOMContentLoaded', function () {
     </div>
   </div>
 </div>
+
+<script>
+/* ============================================================
+ * === My Recipes (レシピ登録機能)
+ * ============================================================ */
+(function () {
+  'use strict';
+  var KEY = 'myRecipes';
+  var MAX_MEDIA_BYTES = 10 * 1024 * 1024; // 10MB
+  var editingId = null;
+  var pendingImage = '';
+  var pendingVideo = '';
+
+  function load() {
+    try { return JSON.parse(localStorage.getItem(KEY) || '[]'); }
+    catch (_) { return []; }
+  }
+  function save(list) { localStorage.setItem(KEY, JSON.stringify(list)); }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function renderList() {
+    var el = document.getElementById('my-recipes-list');
+    if (!el) return;
+    var list = load();
+    if (!list.length) {
+      el.innerHTML = '<div class="my-recipe-empty">まだレシピがありません。下のフォームから登録しましょう。</div>';
+      return;
+    }
+    el.innerHTML = list.map(function (r) {
+      var thumb = r.imageUrl
+        ? '<div class="my-recipe-item-thumb"><img src="' + esc(r.imageUrl) + '" alt=""></div>'
+        : '<div class="my-recipe-item-thumb">🍳</div>';
+      return '<div class="my-recipe-item" data-id="' + esc(r.id) + '">'
+        + thumb
+        + '<div class="my-recipe-item-name" data-action="view">' + esc(r.name || '(無題)') + '</div>'
+        + '<div class="my-recipe-item-actions">'
+        +   '<button type="button" data-action="edit" aria-label="編集">✏️</button>'
+        +   '<button type="button" data-action="delete" aria-label="削除">✕</button>'
+        + '</div></div>';
+    }).join('');
+  }
+  window.renderMyRecipes = renderList;
+
+  function resetForm() {
+    editingId = null;
+    pendingImage = '';
+    pendingVideo = '';
+    ['my-recipe-name', 'my-recipe-ingredients', 'my-recipe-steps', 'my-recipe-notes'].forEach(function (id) {
+      var e = document.getElementById(id); if (e) e.value = '';
+    });
+    var img = document.getElementById('my-recipe-image'); if (img) img.value = '';
+    var vid = document.getElementById('my-recipe-video'); if (vid) vid.value = '';
+    var ip = document.getElementById('my-recipe-image-preview'); if (ip) ip.innerHTML = '';
+    var vp = document.getElementById('my-recipe-video-preview'); if (vp) vp.innerHTML = '';
+    var ft = document.getElementById('my-recipe-form-title'); if (ft) ft.textContent = '新規登録';
+    var cb = document.getElementById('my-recipe-cancel'); if (cb) cb.style.display = 'none';
+  }
+
+  function loadToForm(r) {
+    editingId = r.id;
+    pendingImage = r.imageUrl || '';
+    pendingVideo = r.videoUrl || '';
+    document.getElementById('my-recipe-name').value = r.name || '';
+    document.getElementById('my-recipe-ingredients').value = r.ingredients || '';
+    document.getElementById('my-recipe-steps').value = r.steps || '';
+    document.getElementById('my-recipe-notes').value = r.notes || '';
+    document.getElementById('my-recipe-image-preview').innerHTML =
+      pendingImage ? '<img src="' + esc(pendingImage) + '" alt="プレビュー">' : '';
+    document.getElementById('my-recipe-video-preview').innerHTML =
+      pendingVideo ? '<video src="' + esc(pendingVideo) + '" controls></video>' : '';
+    document.getElementById('my-recipe-form-title').textContent = '編集中';
+    document.getElementById('my-recipe-cancel').style.display = '';
+    var ft = document.getElementById('my-recipe-form-title');
+    if (ft && ft.scrollIntoView) {
+      try { ft.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (_) {}
+    }
+  }
+
+  function showDetail(r) {
+    var overlay = document.getElementById('my-recipe-detail');
+    var body = document.getElementById('my-recipe-detail-body');
+    if (!overlay || !body) return;
+    body.innerHTML = '<button type="button" class="detail-close" aria-label="閉じる">×</button>'
+      + '<h3>' + esc(r.name || '(無題)') + '</h3>'
+      + (r.imageUrl ? '<img src="' + esc(r.imageUrl) + '" alt="" style="max-width:100%;border-radius:8px;">' : '')
+      + (r.videoUrl ? '<video src="' + esc(r.videoUrl) + '" controls style="width:100%;border-radius:8px;margin-top:8px;"></video>' : '')
+      + '<div class="detail-section"><strong>材料</strong><pre>' + esc(r.ingredients || '') + '</pre></div>'
+      + '<div class="detail-section"><strong>作り方</strong><pre>' + esc(r.steps || '') + '</pre></div>'
+      + (r.notes ? '<div class="detail-section"><strong>メモ</strong><pre>' + esc(r.notes) + '</pre></div>' : '');
+    overlay.classList.add('active');
+    var closeBtn = body.querySelector('.detail-close');
+    if (closeBtn) closeBtn.addEventListener('click', function () { overlay.classList.remove('active'); });
+  }
+
+  function handleFile(input, kind) {
+    var f = input.files && input.files[0];
+    if (!f) return;
+    if (f.size > MAX_MEDIA_BYTES) {
+      alert((kind === 'video' ? '動画' : '画像') + 'のサイズが10MBを超えています（現在 '
+        + (f.size / 1024 / 1024).toFixed(1) + 'MB）。\n保存できません。小さいファイルを選択してください。');
+      input.value = '';
+      return;
+    }
+    var fr = new FileReader();
+    fr.onload = function (e) {
+      var url = e.target.result;
+      if (kind === 'image') {
+        pendingImage = url;
+        document.getElementById('my-recipe-image-preview').innerHTML =
+          '<img src="' + esc(url) + '" alt="プレビュー">';
+      } else {
+        pendingVideo = url;
+        document.getElementById('my-recipe-video-preview').innerHTML =
+          '<video src="' + esc(url) + '" controls></video>';
+      }
+    };
+    fr.readAsDataURL(f);
+  }
+
+  function saveRecipe() {
+    var nameEl = document.getElementById('my-recipe-name');
+    var name = nameEl ? nameEl.value.trim() : '';
+    if (!name) { alert('レシピ名を入力してください'); return; }
+    var rec = {
+      id: editingId || ('my_' + Date.now()),
+      name: name,
+      ingredients: document.getElementById('my-recipe-ingredients').value,
+      steps: document.getElementById('my-recipe-steps').value,
+      notes: document.getElementById('my-recipe-notes').value,
+      imageUrl: pendingImage || '',
+      videoUrl: pendingVideo || '',
+      createdAt: new Date().toISOString()
+    };
+    var list = load();
+    if (editingId) {
+      var idx = list.findIndex(function (x) { return x.id === editingId; });
+      if (idx >= 0) {
+        rec.createdAt = list[idx].createdAt || rec.createdAt;
+        list[idx] = rec;
+      } else {
+        list.unshift(rec);
+      }
+    } else {
+      list.unshift(rec);
+    }
+    try { save(list); }
+    catch (e) {
+      alert('保存に失敗しました。容量が上限に達している可能性があります。\n' + (e && e.message ? e.message : ''));
+      return;
+    }
+    resetForm();
+    renderList();
+    if (typeof window.showToast === 'function') {
+      window.showToast('レシピを保存しました');
+    }
+  }
+
+  function deleteRecipe(id) {
+    var list = load();
+    var r = list.find(function (x) { return x.id === id; });
+    if (!r) return;
+    var doDel = function () {
+      var next = load().filter(function (x) { return x.id !== id; });
+      save(next);
+      if (editingId === id) resetForm();
+      renderList();
+      if (typeof window.showToast === 'function') window.showToast('削除しました');
+    };
+    if (typeof window.showDeleteConfirm === 'function') {
+      window.showDeleteConfirm(r.name || 'レシピ', doDel, null, 'レシピ');
+    } else if (confirm('「' + (r.name || 'レシピ') + '」を削除しますか？')) {
+      doDel();
+    }
+  }
+
+  function initPanelHandlers() {
+    var panel = document.getElementById('panel-my-recipes');
+    if (!panel || panel.dataset.initialized) return;
+    panel.dataset.initialized = '1';
+
+    panel.addEventListener('click', function (e) {
+      var item = e.target.closest && e.target.closest('.my-recipe-item');
+      if (!item) return;
+      var id = item.dataset.id;
+      var action = e.target.dataset && e.target.dataset.action;
+      if (!action) {
+        var nameEl = e.target.closest('.my-recipe-item-name');
+        if (nameEl) action = 'view';
+      }
+      if (!action) return;
+      var list = load();
+      var r = list.find(function (x) { return x.id === id; });
+      if (!r) return;
+      if (action === 'view') showDetail(r);
+      else if (action === 'edit') loadToForm(r);
+      else if (action === 'delete') deleteRecipe(id);
+    });
+
+    var saveBtn = document.getElementById('my-recipe-save');
+    if (saveBtn) saveBtn.addEventListener('click', saveRecipe);
+    var cancelBtn = document.getElementById('my-recipe-cancel');
+    if (cancelBtn) cancelBtn.addEventListener('click', resetForm);
+    var imgIn = document.getElementById('my-recipe-image');
+    if (imgIn) imgIn.addEventListener('change', function () { handleFile(imgIn, 'image'); });
+    var vidIn = document.getElementById('my-recipe-video');
+    if (vidIn) vidIn.addEventListener('change', function () { handleFile(vidIn, 'video'); });
+
+    var overlay = document.getElementById('my-recipe-detail');
+    if (overlay) overlay.addEventListener('click', function (e) {
+      if (e.target === overlay) overlay.classList.remove('active');
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () {
+      initPanelHandlers();
+      renderList();
+    });
+  } else {
+    initPanelHandlers();
+    try { renderList(); } catch (_) {}
+  }
+})();
+</script>
 </body>
 </html>
