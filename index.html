@@ -5225,11 +5225,24 @@ renderFridge();
       .replace(/、+/g, '、')
       .replace(/^、|、$/g, '');
   }
+  // Ensure mic indicator is fully released (iOS Safari workaround)
+  function releaseMic(btn, rec) {
+    try { if (rec) { rec.onresult = null; rec.onerror = null; rec.onend = null; rec.onstart = null; } } catch (_) {}
+    try { if (rec && rec.abort) rec.abort(); } catch (_) {}
+    try { if (rec && rec.stop) rec.stop(); } catch (_) {}
+    if (btn) {
+      btn._recognizing = false;
+      btn._rec = null;
+      btn.classList.remove('recording');
+      btn.textContent = '🎤';
+    }
+  }
   window.startVoiceInput = function (targetId, btn) {
     var target = document.getElementById(targetId);
     if (!target) return;
     if (btn._recognizing) {
-      try { btn._rec.stop(); } catch (_) {}
+      // User tapped to stop: abort hard so iOS releases the mic immediately
+      releaseMic(btn, btn._rec);
       return;
     }
     var rec = new SR();
@@ -5241,6 +5254,12 @@ renderFridge();
     btn._recognizing = true;
     btn.classList.add('recording');
     btn.textContent = '●';
+    var ended = false;
+    function finalize() {
+      if (ended) return;
+      ended = true;
+      releaseMic(btn, rec);
+    }
     rec.onresult = function (ev) {
       try {
         var text = ev.results[0][0].transcript || '';
@@ -5252,23 +5271,27 @@ renderFridge();
           target.dispatchEvent(new Event('input', { bubbles: true }));
         }
       } catch (_) {}
+      // Force stop after capturing the result so the mic icon disappears
+      try { rec.stop(); } catch (_) {}
     };
     rec.onerror = function (ev) {
       var msg = '音声認識でエラーが発生しました';
       if (ev && ev.error === 'not-allowed') msg = 'マイクの使用が許可されていません';
       else if (ev && ev.error === 'no-speech') msg = '音声が聞こえませんでした';
       if (window.showSnackbar) window.showSnackbar(msg);
+      finalize();
     };
-    rec.onend = function () {
-      btn._recognizing = false;
-      btn._rec = null;
-      btn.classList.remove('recording');
-      btn.textContent = '🎤';
-    };
+    rec.onend = function () { finalize(); };
+    // Safety net: if onend never fires (iOS edge case), force release after timeout
+    setTimeout(function () { if (!ended && btn._rec === rec) finalize(); }, 15000);
+    // Release mic when page is hidden/unloaded
+    var onHide = function () { finalize(); };
+    window.addEventListener('pagehide', onHide, { once: true });
+    document.addEventListener('visibilitychange', function vc() {
+      if (document.hidden) { finalize(); document.removeEventListener('visibilitychange', vc); }
+    });
     try { rec.start(); } catch (_) {
-      btn._recognizing = false;
-      btn.classList.remove('recording');
-      btn.textContent = '🎤';
+      finalize();
     }
   };
   document.addEventListener('click', function (e) {
