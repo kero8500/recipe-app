@@ -554,7 +554,6 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    box-shadow: none;
   }
   .shop-delete-btn:active {
     background: #ffe8d6;
@@ -1800,7 +1799,6 @@
     color: #c33;
     font-size: 14px;
     cursor: pointer;
-    box-shadow: none;
     padding: 0;
     display: flex;
     align-items: center;
@@ -5572,7 +5570,7 @@ renderFridge();
         if (typeof window.showDeleteConfirm === 'function') {
           window.showDeleteConfirm(name, function () {
             removeShoppingItem(id);
-          });
+          }, null, '食材');
         } else {
           removeShoppingItem(id);
         }
@@ -5610,7 +5608,7 @@ renderFridge();
                 removeShoppingItem(id);
               }, function () {
                 if (typeof window.resetSwipeState === 'function') window.resetSwipeState(el);
-              });
+              }, '食材');
             } else {
               removeShoppingItem(id);
             }
@@ -6665,15 +6663,20 @@ renderFridge();
 document.addEventListener('DOMContentLoaded', function () {
   var overlay = document.getElementById('delete-confirm');
   var nameEl = document.getElementById('dc-recipe-name');
+  var titleEl = overlay ? overlay.querySelector('.dc-title') : null;
   var cancelBtn = document.getElementById('dc-cancel-btn');
   var deleteBtn = document.getElementById('dc-delete-btn');
   if (!overlay || !nameEl || !cancelBtn || !deleteBtn) return;
 
   var pendingCallback = null;
   var pendingCancelCallback = null;
+  var defaultTitle = titleEl ? titleEl.textContent : 'このレシピを削除しますか？';
 
-  window.showDeleteConfirm = function (recipeName, onConfirm, onCancel) {
+  window.showDeleteConfirm = function (recipeName, onConfirm, onCancel, itemType) {
     nameEl.textContent = recipeName || '';
+    if (titleEl) {
+      titleEl.textContent = itemType ? ('この' + itemType + 'を削除しますか？') : defaultTitle;
+    }
     pendingCallback = onConfirm || null;
     pendingCancelCallback = onCancel || null;
     overlay.classList.add('active');
