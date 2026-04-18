@@ -775,19 +775,45 @@
     border-radius: 6px;
     margin-bottom: 10px;
   }
-  /* Fridge (inventory) */
+  /* Fridge (inventory) - 2行レイアウト */
   .fridge-item {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) 70px 92px 40px;
-    gap: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
     padding: 8px 4px;
     border-bottom: 1px dashed #ffd4b0;
-    align-items: center;
     font-size: 13px;
   }
-  .fridge-item > .fridge-date { text-align: right; }
-  .fridge-item > div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .fridge-item > div.fridge-qty { text-align: right; }
+  .fridge-row-1 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
+  .fridge-row-2 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding-left: 26px; /* チェックボックス分インデント */
+    width: 100%;
+  }
+  .fridge-row-2 .fridge-badge-slot { flex: 0 0 auto; }
+  .fridge-row-2 .fridge-date { flex: 1 1 auto; text-align: right; font-size: 11px; color: #8b4513; }
+  .fridge-row-1 .fridge-name {
+    flex: 1 1 auto;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .fridge-row-1 .fridge-qty {
+    flex: 0 0 auto;
+    text-align: right;
+    font-size: 12px;
+    color: #8b4513;
+    min-width: 48px;
+  }
   .fridge-item.expiring { background: #fff3e6; }
   .fridge-item.expired { background: #ffe0e0; }
   .fridge-item input[type="text"], .fridge-item input[type="date"] {
@@ -800,12 +826,61 @@
     border-radius: 10px;
     font-size: 11px;
     font-weight: 700;
-    margin-left: 6px;
   }
   .fridge-badge.warn { background: #ffe8d6; color: #c33; }
   .fridge-badge.expired { background: #ffd4d4; color: #a00; }
   .fridge-badge.ok { background: #e8f5e9; color: #2e7d32; }
-  /* fridge-delete-btn は .shop-delete-btn と共用（上書き不要） */
+  /* fridge-delete-btn / fridge-edit-btn は .shop-delete-btn と共用 */
+  .fridge-edit-btn {
+    flex: 0 0 auto;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    border-radius: 50%;
+    background: #fff;
+    border: 1px solid #ffd4b0;
+    color: #e8590c;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .fridge-edit-btn:active { background: #ffe8d6; }
+  /* インライン編集フォーム */
+  .fridge-edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px 4px;
+    background: #fffaf3;
+    border-bottom: 1px dashed #ffd4b0;
+  }
+  .fridge-edit-form input[type="text"],
+  .fridge-edit-form input[type="date"] {
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 14px;
+    border: 1.5px solid #ffd4b0;
+    border-radius: 8px;
+    box-sizing: border-box;
+    background: #fff;
+  }
+  .fridge-edit-form input:focus { outline: none; border-color: #e8590c; }
+  .fridge-edit-actions { display: flex; gap: 8px; margin-top: 4px; }
+  .fridge-edit-actions button {
+    flex: 1 1 0;
+    min-height: 40px;
+    font-size: 14px;
+    font-weight: 700;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+  }
+  .fridge-edit-save { background: #e8590c; color: #fff; }
+  .fridge-edit-cancel { background: #fff; color: #8b4513; border: 1.5px solid #ffd4b0 !important; }
   .fridge-add-row {
     display: flex;
     flex-direction: column;
@@ -4574,7 +4649,20 @@ function renderFridge() {
     container.innerHTML = '<div style="color:#8b4513; font-size:13px; padding:10px 0;">まだ在庫が登録されていません。</div>';
     return;
   }
+  var editingId = window._fridgeEditingId || null;
   container.innerHTML = list.map(function (item) {
+    if (editingId && editingId === item.id) {
+      // 編集モード
+      return '<div class="fridge-edit-form" data-id="' + escapeHtml(item.id) + '">' +
+        '<input type="text" class="fridge-edit-name" value="' + escapeHtml(item.name || '') + '" placeholder="食材名" aria-label="食材名">' +
+        '<input type="text" class="fridge-edit-amount" value="' + escapeHtml(item.amount || '') + '" placeholder="数量 (例: 1個)" aria-label="数量">' +
+        '<input type="date" class="fridge-edit-expiry" value="' + escapeHtml(item.expiry || '') + '" aria-label="賞味期限">' +
+        '<div class="fridge-edit-actions">' +
+          '<button type="button" class="fridge-edit-cancel" data-id="' + escapeHtml(item.id) + '">キャンセル</button>' +
+          '<button type="button" class="fridge-edit-save" data-id="' + escapeHtml(item.id) + '">保存</button>' +
+        '</div>' +
+      '</div>';
+    }
     var days = fridgeDaysLeft(item.expiry);
     var cls = 'fridge-item';
     var badge = '';
@@ -4590,13 +4678,20 @@ function renderFridge() {
       }
     }
     var checked = (window._fridgeSelected && window._fridgeSelected[item.id]) ? ' checked' : '';
+    var dateText = item.expiry ? formatJpDate(item.expiry) : '期限なし';
     return '<div class="' + cls + '" data-id="' + escapeHtml(item.id) + '">' +
-      '<input type="checkbox" class="fridge-item-check" data-id="' + escapeHtml(item.id) + '"' + checked + ' aria-label="' + escapeHtml(item.name) + 'を選択">' +
-      '<div>' + escapeHtml(item.name) + badge + '</div>' +
-      '<div class="fridge-qty" style="font-size:12px; color:#8b4513;">' + escapeHtml(item.amount || '-') + '</div>' +
-      '<div class="fridge-date" style="font-size:11px; color:#8b4513;">' + escapeHtml(item.expiry ? formatJpDate(item.expiry) : '期限なし') + '</div>' +
-      '<button class="shop-delete-btn fridge-delete-btn" data-id="' + escapeHtml(item.id) + '" aria-label="' + escapeHtml(item.name) + 'を削除">×</button>' +
-      '</div>';
+      '<div class="fridge-row-1">' +
+        '<input type="checkbox" class="fridge-item-check" data-id="' + escapeHtml(item.id) + '"' + checked + ' aria-label="' + escapeHtml(item.name) + 'を選択">' +
+        '<div class="fridge-name">' + escapeHtml(item.name) + '</div>' +
+        '<div class="fridge-qty">' + escapeHtml(item.amount || '-') + '</div>' +
+        '<button class="fridge-edit-btn" data-id="' + escapeHtml(item.id) + '" aria-label="' + escapeHtml(item.name) + 'を編集" title="編集">✏</button>' +
+        '<button class="shop-delete-btn fridge-delete-btn" data-id="' + escapeHtml(item.id) + '" aria-label="' + escapeHtml(item.name) + 'を削除">×</button>' +
+      '</div>' +
+      '<div class="fridge-row-2">' +
+        '<span class="fridge-badge-slot">' + badge + '</span>' +
+        '<span class="fridge-date">' + escapeHtml(dateText) + '</span>' +
+      '</div>' +
+    '</div>';
   }).join('');
   container.querySelectorAll('.fridge-delete-btn').forEach(function (btn) {
     btn.addEventListener('click', function (e) {
@@ -4613,6 +4708,45 @@ function renderFridge() {
         window.showDeleteConfirm(name, doDelete, null, '食材');
       } else {
         doDelete();
+      }
+    });
+  });
+  container.querySelectorAll('.fridge-edit-btn').forEach(function (btn) {
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      window._fridgeEditingId = btn.dataset.id;
+      renderFridge();
+    });
+  });
+  container.querySelectorAll('.fridge-edit-cancel').forEach(function (btn) {
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      window._fridgeEditingId = null;
+      renderFridge();
+    });
+  });
+  container.querySelectorAll('.fridge-edit-save').forEach(function (btn) {
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var id = btn.dataset.id;
+      var form = btn.closest('.fridge-edit-form');
+      if (!form) return;
+      var name = (form.querySelector('.fridge-edit-name').value || '').trim();
+      var amount = (form.querySelector('.fridge-edit-amount').value || '').trim();
+      var expiry = (form.querySelector('.fridge-edit-expiry').value || '').trim();
+      if (!name) { alert('食材名を入力してください。'); return; }
+      var list = loadFridge();
+      var idx = -1;
+      for (var i = 0; i < list.length; i++) { if (list[i].id === id) { idx = i; break; } }
+      if (idx < 0) { window._fridgeEditingId = null; renderFridge(); return; }
+      list[idx].name = name;
+      list[idx].amount = amount;
+      list[idx].expiry = expiry;
+      saveFridge(list);
+      window._fridgeEditingId = null;
+      renderFridge();
+      if (typeof window.showSnackbar === 'function') {
+        try { window.showSnackbar('「' + name + '」を更新しました'); } catch (_) {}
       }
     });
   });
